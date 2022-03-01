@@ -16,7 +16,7 @@ setup(
     long_description=readme,
     author="The WAMR Project Developers",
     author_email="hello@bytecodealliance.org",
-    url="https://github.com/lum1n0us/wamr-python",
+    url="https://github.com/bytecodealliance/wamr-python",
     license=license,
     packages=["wamr"],
 )
