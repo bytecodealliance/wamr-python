@@ -120,7 +120,7 @@ class wasm_byte_vec_t(ctypes.Structure):
   ]
 ```
 
-a list of supported `struct`
+a list of `Structures`
 
 | name              |
 | ----------------- |
@@ -136,9 +136,11 @@ a list of supported `struct`
 | wasm_importtype_t |
 | wasm_exporttype_t |
 | wasm_ref_t        |
+| wasm_ref_t        |
 | wasm_frame_t      |
 | wasm_trap_t       |
 | wasm_foreign_t    |
+| WASMModuleCommon  |
 | WASMModuleCommon  |
 | wasm_func_t       |
 | wasm_global_t     |
@@ -147,11 +149,9 @@ a list of supported `struct`
 | wasm_extern_t     |
 | wasm_instance_t   |
 
-a list of unsupported `struct`
+not supported `struct`
 
 - wasm_config_t
-
-#### Union types
 
 If there is an anonymous `union` in native.
 
@@ -361,11 +361,6 @@ directly without any arguments type checking.
 libc.printf(b"Hello, an int %d, a float %f, a string %s\n", c_int(1), c_doulbe(3.14), "World!")
 ```
 
-#### inline
-
-`static inline` funtions are hidden by compilers by default. So, it will not
-create wrappers for those unvisiable symbols.
-
 #### Use `c_bool` to represent `wasm_mutability_t `
 
 - `True` for `WASM_CONST`
@@ -373,12 +368,10 @@ create wrappers for those unvisiable symbols.
 
 #### customize class builtins
 
-In `ffi.py`,
-
 - `__eq__` for comparation.
 - `__repr__` for printing.
 
-## bindgen.py
+### bindgen.py
 
 `bindge.py` is a tool to create WAMR python binding automatically. `binding.py`
 is generated. We should avoid modification on it. Additional helpers should go
@@ -436,6 +429,8 @@ programming with those.
 In next phase, we will create OOP APIs. Almost follow the
 [C++ version of wasm_c_api](https://github.com/WebAssembly/wasm-c-api/blob/master/include/wasm.hh)
 
+## A big list
+
 | WASM Concept | Procedural APIs                | OOP APIs   | OOP APIs methods |
 | ------------ | ------------------------------ | ---------- | ---------------- |
 | XXX_vec      | wasm_xxx_vec_new               |            | list             |
@@ -486,14 +481,10 @@ In next phase, we will create OOP APIs. Almost follow the
 |              | _vector methods_               |            |                  |
 | exportype    | wasm_exporttype_new            | exporttype |                  |
 |              | wasm_exporttype_delete         |            |                  |
-|              | wasm_exporttype_module         |            |                  |
 |              | wasm_exporttype_name           |            |                  |
 |              | wasm_exporttype_type           |            |                  |
 |              | wasm_exporttype_copy           |            |                  |
 |              | _vector methods_               |            |                  |
-| name         | wasm_name_new                  | name       |                  |
-|              | wasm_name_delete               |            |                  |
-|              | wasm_name_copy                 |            |                  |
 | val          | wasm_val_delete                | val        |                  |
 |              | wasm_val_copy                  |            |                  |
 |              | _vector methods_               |            |                  |
@@ -515,6 +506,7 @@ In next phase, we will create OOP APIs. Almost follow the
 |              | _vector methods_               |            |                  |
 | engine       | wasm_engine_new                | engine     |                  |
 |              | wasm_engine_new_with_args\*    |            |                  |
+|              | wasm_engine_new_with_config    |            |                  |
 |              | wasm_engine_delete             |            |                  |
 | store        | wasm_store_new                 | store      |                  |
 |              | wasm_store_delete              |            |                  |
@@ -572,6 +564,7 @@ not supported _functions_
 - wasm_ref_XXX
 - wasm_XXX_as_ref
 - wasm_XXX_as_ref_const
+- wasm_XXX_copy
 - wasm_XXX_get_host_info
 - wasm_XXX_set_host_info
 
