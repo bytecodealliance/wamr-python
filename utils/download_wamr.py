@@ -6,10 +6,9 @@
 #
 
 """
-Download source code of WAMR from github.
-
-By default, use the latest code of the *main* branch. If identify a commit ID
-in command line, the script will checkout to that commit.
+Download the repo of WAMR from Github. The script will `git checkout` to the
+latest commit ID of the main branch unless it receives a specific ID from the
+command line.
 """
 
 import argparse
