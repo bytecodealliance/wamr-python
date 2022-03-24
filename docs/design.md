@@ -36,23 +36,23 @@ Like `c_bool`, `c_byte`, `c_int`, `c_long` and so on.
 > `c_int` represents the _C_ `signed int` datatype. On platforms where
 > `sizeof(int) == sizeof(long)` it is an alias to `c_long`.
 
-| c datatypes         | ctypes   |
-| ------------------- | -------- |
-| byte_t              | c_ubyte  |
-| float32_t           | c_float  |
-| float64_t           | c_double |
-| int32_t             | c_int32  |
-| int64_t             | c_int64  |
-| intptr_t            | c_void_p |
-| size_t              | c_size_t |
-| uint8_t             | c_uint8  |
-| uint32_t            | c_uint32 |
-| wasm_byte_t         | c_ubyte  |
-| wasm_externkind_t   | c_uint8  |
-| wasm_memory_pages_t | c_uint32 |
-| wasm_mutability_t   | c_bool   |
-| wasm_table_size_t   | c_uint32 |
-| wasm_valkind_t      | c_uint8  |
+| c datatypes         | ctypes         |
+| ------------------- | -------------- |
+| byte_t              | c_ubyte        |
+| float32_t           | c_float        |
+| float64_t           | c_double       |
+| int32_t             | c_int32        |
+| int64_t             | c_int64        |
+| intptr_t            | c_void_p       |
+| size_t              | c_size_t       |
+| uint8_t             | c_uint8        |
+| uint32_t            | c_uint32       |
+| wasm_byte_t         | c_ubyte        |
+| wasm_externkind_t   | c_uint8        |
+| wasm_memory_pages_t | c_uint32       |
+| wasm_mutability_t   | c_bool         |
+| wasm_table_size_t   | c_uint32       |
+| wasm_valkind_t      | wasm_valkind_t |
 
 `ctypes.POINTER(datatype_name)` represents any kind of pointer.
 
