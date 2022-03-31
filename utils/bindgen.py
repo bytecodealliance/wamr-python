@@ -11,7 +11,7 @@
 """
 import os
 import pathlib
-import pycparser
+from pycparser import c_ast, parse_file
 import shutil
 import sys
 
@@ -21,13 +21,17 @@ BINDING_PY = "wamr/binding.py"
 INDENT = "    "
 
 
-class Visitor(pycparser.c_ast.NodeVisitor):
+class Visitor(c_ast.NodeVisitor):
     def __init__(self):
         self.type_map = {
-            "byte_t": "ctypes.c_ubyte",
-            "size_t": "ctypes.c_size_t",
-            "uint32_t": "ctypes.c_uint32",
-            "uint8_t": "ctypes.c_uint8",
+            "_Bool": "c_bool",
+            "byte_t": "c_ubyte",
+            "char": "c_char",
+            "int": "c_int",
+            "size_t": "c_size_t",
+            "uint32_t": "c_uint32",
+            "uint8_t": "c_uint8",
+            "void": "None",
         }
         self.ret = (
             "# -*- coding: utf-8 -*-\n"
@@ -36,42 +40,22 @@ class Visitor(pycparser.c_ast.NodeVisitor):
             "# Copyright (C) 2019 Intel Corporation.  All rights reserved.\n"
             "# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception\n"
             "#\n"
-            "# DO NOT EDIT IT. IT IS CREATED BY A SCRIPT\n"
+            "#It is a generated file. DO NOT EDIT.\n"
             "#\n"
-            "import ctypes\n"
-            "\n"
-        )
-        # WORKAROUNDS:
-        # predefined types
-        self.ret += (
-            "class _OF(ctypes.Union):\n"
-            "  _fields_ = [\n"
-            '    ("i32", ctypes.c_int32),\n'
-            '    ("i64", ctypes.c_int64),\n'
-            '    ("f32", ctypes.c_float),\n'
-            '    ("f64", ctypes.c_double),\n'
-            "  ]\n"
-            "\n"
-            "class wasm_val_t(ctypes.Structure):\n"
-            '  _anonymous_ = ("of",)\n'
-            "  _fields_ = [\n"
-            '    ("kind", ctypes.c_uint8)\n'
-            '    ("of", _OF)\n'
-            "  ]\n"
+            "from .additional import *\n"
+            "from ctypes import *\n"
             "\n"
         )
 
     def get_type_name(self, type):
-        if isinstance(type, pycparser.c_ast.TypeDecl):
-            type = type.type
-        elif isinstance(type, pycparser.c_ast.PtrDecl):
-            return f"ctypes.POINTER({self.get_type_name(type.type)})"
-        elif isinstance(type, pycparser.c_ast.FuncDecl):
-            print(type)
-        else:
-            raise Exception(f"unexpected type: {type}")
-
-        if isinstance(type, pycparser.c_ast.IdentifierType):
+        if isinstance(type, c_ast.TypeDecl):
+            return self.get_type_name(type.type)
+        elif isinstance(type, c_ast.PtrDecl):
+            pointed_type = self.get_type_name(type.type)
+            return "c_void_p" if "None" == pointed_type else f"POINTER({pointed_type})"
+        elif isinstance(type, c_ast.ArrayDecl):
+            return f"POINTER({self.get_type_name(type.type)})"
+        elif isinstance(type, c_ast.IdentifierType):
             if len(type.names) > 1:
                 raise Exception(f"unexpected type with a long names: {type}")
 
@@ -84,18 +68,31 @@ class Visitor(pycparser.c_ast.NodeVisitor):
                 raise Exception(f"a new type should be in type_map: {type}")
 
             return self.type_map.get(type)
-        elif isinstance(type, pycparser.c_ast.Union):
+        elif isinstance(type, c_ast.Union):
             if not type.name:
                 raise Exception(f"found an anonymous union {type}")
 
             return type.name
-        elif isinstance(type, pycparser.c_ast.Struct):
+        elif isinstance(type, c_ast.Struct):
             if not type.name:
                 raise Exception(f"found an anonymous union {type}")
 
             return type.name
+        elif isinstance(type, c_ast.FuncDecl):
+            content = "CFUNCTYPE("
+            content += f"{self.get_type_name(type.type)}"
+            content += f",{self.get_type_name(type.args)}" if type.args else ""
+            content += ")"
+            return content
+        elif isinstance(type, c_ast.Decl):
+            return self.get_type_name(type.type)
+        elif isinstance(type, c_ast.ParamList):
+            content = ",".join(
+                [self.get_type_name(param.type) for param in type.params]
+            )
+            return content
         else:
-            return "unknown"
+            raise Exception(f"unexpected type: {type.show()}")
 
     def visit_Struct(self, node):
         def gen_fields(info, indent):
@@ -105,30 +102,41 @@ class Visitor(pycparser.c_ast.NodeVisitor):
             return content[:-1]
 
         def gen_equal(info, indent):
-            content = f"{indent}return "
+            content = f"{indent}return"
             for k, v in info.items():
                 # not compare pointer value in __eq__
-                if v.startswith("ctypes.POINTER"):
+                if v.startswith("POINTER"):
                     continue
 
                 content += f" self.{k} == other.{k} and"
             return content[:-4]
 
+        def gen_repr(info, indent):
+            content = f'{indent}return f"'
+            for k, _ in info.items():
+                content += f"{k}={{self.{k}}}, "
+            content = content[:-2] + '"'
+            return content
+
         if not node.name or node.name in ["__locale_struct", "wasm_val_t"]:
             return
 
         name = node.name
+
+        del_func = None
+        if not name in ("wasm_limits_t"):
+            # a strong assumption about wasm_xxx_t -> wasm_xxx_delete
+            del_func = name.rpartition("_t")[0] + "_delete"
+
         info = {}
         if node.decls:
             for decl in node.decls:
                 info[decl.name] = self.get_type_name(decl.type)
 
-        print(f"Struct: {name}, {info}")
-
         if info:
             self.ret += (
-                f"class {name}(ctypes.Structure):\n"
-                f"{INDENT}__field__ = [\n"
+                f"class {name}(Structure):\n"
+                f"{INDENT}_fields_ = [\n"
                 f"{gen_fields(info, INDENT*2)}\n"
                 f"{INDENT}]\n"
                 f"\n"
@@ -136,18 +144,32 @@ class Visitor(pycparser.c_ast.NodeVisitor):
                 f"{INDENT*2}if not isinstance(other, {name}):\n"
                 f"{INDENT*3}return False\n"
                 f"{gen_equal(info, INDENT*2)}\n"
+                f"\n"
+                f"{INDENT}def __repr__(self):\n"
+                f"{gen_repr(info, INDENT*2)}\n"
+                f"\n"
             )
+
+            if del_func:
+                self.ret += (
+                    f"{INDENT}def __del__(self):\n"
+                    f"{INDENT*2}return {del_func}(self)\n"
+                    f"\n"
+                )
         else:
-            self.ret += f"class {name}(ctypes.Structure):\n{INDENT}pass\n"
+            self.ret += f"class {name}(Structure):\n{INDENT}pass\n"
 
         self.ret += "\n"
 
     def visit_Union(self, node):
-        print(f"Union: {node.name}")
+        print(f"Union: {node.show()}")
 
     def visit_Typedef(self, node):
         # system defined
-        if not node.name or not node.name.startswith("wasm_"):
+        if not node.name:
+            return
+
+        if not node.name.startswith("wasm_"):
             return
 
         self.visit(node.type)
@@ -159,8 +181,69 @@ class Visitor(pycparser.c_ast.NodeVisitor):
             self.ret += "\n"
 
     def visit_FuncDecl(self, node):
-        # print(f"FuncDecl: {node.type}")
-        pass
+        restype = self.get_type_name(node.type)
+
+        if isinstance(node.type, c_ast.TypeDecl):
+            func_name = node.type.declname
+        elif isinstance(node.type, c_ast.PtrDecl):
+            func_name = node.type.type.declname
+        else:
+            raise Exception(f"unexpected type in FuncDecl: {type}")
+
+        if not func_name.startswith("wasm_"):
+            return
+
+        # workaround for bug and inlines
+        if func_name in (
+            "wasm_engine_new_with_args",
+            "wasm_valkind_is_num",
+            "wasm_valkind_is_ref",
+            "wasm_valtype_is_num",
+            "wasm_valtype_is_ref",
+        ):
+            return
+
+        params_len = 0
+        for arg in node.args.params:
+            # ignore void but not void*
+            if isinstance(arg.type, c_ast.TypeDecl):
+                type_name = self.get_type_name(arg.type)
+                if "None" == type_name:
+                    continue
+
+            params_len += 1
+
+        args = (
+            "" if not params_len else ",".join([f"arg{i}" for i in range(params_len)])
+        )
+        argtypes = f"[{self.get_type_name(node.args)}]" if params_len else "None"
+
+        self.ret += (
+            f"def {func_name}({args}):\n"
+            f"{INDENT}_{func_name} = libiwasm.{func_name}\n"
+            f"{INDENT}_{func_name}.restype = {restype}\n"
+            f"{INDENT}_{func_name}.argtypes = {argtypes}\n"
+            f"{INDENT}return _{func_name}({args})\n"
+        )
+        self.ret += "\n"
+
+    def visit_Enum(self, node):
+        elem_value = 0
+        # generate enum elementes directly as consts with values
+        for i, elem in enumerate(node.values.enumerators):
+            self.ret += f"{elem.name}"
+
+            if elem.value:
+                elem_value = int(elem.value.value)
+            else:
+                if 0 == i:
+                    elem_value = 0
+                else:
+                    elem_value += 1
+
+            self.ret += f" = {elem_value}\n"
+
+        self.ret += f"\n"
 
 
 def preflight_check(workspace):
@@ -187,7 +270,7 @@ def do_parse(workspace):
     filename = workspace.joinpath(WASM_C_API_HEADER)
     filename = str(filename)
 
-    ast = pycparser.parse_file(
+    ast = parse_file(
         filename,
         use_cpp=True,
         cpp_path="gcc",

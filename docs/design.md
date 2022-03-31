@@ -38,7 +38,9 @@ Like `c_bool`, `c_byte`, `c_int`, `c_long` and so on.
 
 | c datatypes         | ctypes         |
 | ------------------- | -------------- |
+| bool                | c_bool         |
 | byte_t              | c_ubyte        |
+| char                | c_char         |
 | float32_t           | c_float        |
 | float64_t           | c_double       |
 | int32_t             | c_int32        |
