@@ -63,6 +63,8 @@ Like `c_bool`, `c_byte`, `c_int`, `c_long` and so on.
 To create a corresponding concept of each native structured data type includes
 `enum`, `struct` and `union`, in the python world.
 
+#### Enum types
+
 For example, if there is a `enum mem_alloc_type_t` in native.
 
 ```c
@@ -75,10 +77,19 @@ typedef enum {
 
 Use `ctypes.int` to represents its value directly.
 
+```python
+# represents enum mem_alloc_type_t
+Alloc_With_Pool = 0
+Alloc_With_Allocator = 1
+Alloc_With_System_Allocator = 2
+```
+
 > C standard only requires "Each enumerated type shall be compatible with char,
 > a signed integer type, or an unsigned integer type. The choice of the integer
 > type is implementation-defined, but shall be capable of representing the
 > values of all the members of the enumeration.
+
+#### Struct types
 
 If there is a `struct wasm_byte_vec_t` in native(in C).
 
@@ -102,6 +113,8 @@ class wasm_byte_vec_t(ctypes.Structure):
     ("size_of_elem", ctypes.c_size_t),
   ]
 ```
+
+#### Union types
 
 If there is an anonymous `union` in native.
 
@@ -208,7 +221,7 @@ It's better to provide two `ctypes.CFUNCTYPE` for `wasm_func_callback_t` and
 A python binding should be just some glue code between the _wasm_c_api_
 and python code. List something useful to guide coding.
 
-#### passing pointers
+#### pass pointers
 
 `byref()` and `pointer()` are choices when passing a pointer value to host when
 using ctypes.
@@ -325,6 +338,11 @@ directly without any arguments type checking.
 libc.printf(b"Hello, an int %d, a float %f, a string %s\n", c_int(1), c_doulbe(3.14), "World!")
 ```
 
+#### inline
+
+`static inline` funtions are hidden by compilers by default. So, it will not
+create wrappers for those unvisiable symbols.
+
 ### bindgen.py
 
 Use _pycparser_. Visit the AST of `core/iwasm/include/wasm_c_api.h` created
@@ -349,6 +367,18 @@ class Visitor(c_ast.NodeVisitor):
 ast = parse_file(...)
 v = Visitor()
 v.visit(ast)
+```
+
+Before running _bindgen.py_, the repo of `wasm-micro-runtime` should be downloaded
+and shared libararies should be generated.
+
+```bash
+$ python utils/download_wamr.py
+$ # if it is in linux
+$ pushd product-mini/platforms/linux/build
+$ cmake .. && make
+$ popd
+$ python utils/bindgen.py
 ```
 
 ## OOP wrappers
