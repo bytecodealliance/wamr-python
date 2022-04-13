@@ -105,7 +105,7 @@ class Visitor(c_ast.NodeVisitor):
             content = f"{indent}return"
             for k, v in info.items():
                 # not compare pointer value in __eq__
-                if v.startswith("POINTER"):
+                if v.startswith("POINTER") or v.startswith("c_void_p"):
                     continue
 
                 content += f" self.{k} == other.{k} and"
@@ -122,11 +122,6 @@ class Visitor(c_ast.NodeVisitor):
             return
 
         name = node.name
-
-        del_func = None
-        if not name in ("wasm_limits_t"):
-            # a strong assumption about wasm_xxx_t -> wasm_xxx_delete
-            del_func = name.rpartition("_t")[0] + "_delete"
 
         info = {}
         if node.decls:
@@ -150,12 +145,6 @@ class Visitor(c_ast.NodeVisitor):
                 f"\n"
             )
 
-            if del_func:
-                self.ret += (
-                    f"{INDENT}def __del__(self):\n"
-                    f"{INDENT*2}return {del_func}(self)\n"
-                    f"\n"
-                )
         else:
             self.ret += f"class {name}(Structure):\n{INDENT}pass\n"
 
