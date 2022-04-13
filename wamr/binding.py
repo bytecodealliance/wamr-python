@@ -17,6 +17,7 @@ class wasm_byte_vec_t(Structure):
         ("data", POINTER(wasm_byte_t)),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -25,10 +26,7 @@ class wasm_byte_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_byte_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_byte_vec_new_empty(arg0):
@@ -153,9 +151,7 @@ def wasm_valtype_delete(arg0):
     _wasm_valtype_delete = libiwasm.wasm_valtype_delete
     _wasm_valtype_delete.restype = None
     _wasm_valtype_delete.argtypes = [POINTER(wasm_valtype_t)]
-    _wasm_valtype_delete(arg0)
-    del arg0
-    return
+    return _wasm_valtype_delete(arg0)
 
 class wasm_valtype_vec_t(Structure):
     _fields_ = [
@@ -163,6 +159,7 @@ class wasm_valtype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_valtype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -171,10 +168,7 @@ class wasm_valtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_valtype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_valtype_vec_new_empty(arg0):
@@ -249,6 +243,7 @@ class wasm_functype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_functype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -257,10 +252,7 @@ class wasm_functype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_functype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_functype_vec_new_empty(arg0):
@@ -332,6 +324,7 @@ class wasm_globaltype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_globaltype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -340,10 +333,7 @@ class wasm_globaltype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_globaltype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_globaltype_vec_new_empty(arg0):
@@ -415,6 +405,7 @@ class wasm_tabletype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_tabletype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -423,10 +414,7 @@ class wasm_tabletype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_tabletype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_tabletype_vec_new_empty(arg0):
@@ -498,6 +486,7 @@ class wasm_memorytype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_memorytype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -506,10 +495,7 @@ class wasm_memorytype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_memorytype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_memorytype_vec_new_empty(arg0):
@@ -575,6 +561,7 @@ class wasm_externtype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_externtype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -583,10 +570,7 @@ class wasm_externtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_externtype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_externtype_vec_new_empty(arg0):
@@ -749,6 +733,7 @@ class wasm_importtype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_importtype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -757,10 +742,7 @@ class wasm_importtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_importtype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_importtype_vec_new_empty(arg0):
@@ -838,6 +820,7 @@ class wasm_exporttype_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_exporttype_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -846,10 +829,7 @@ class wasm_exporttype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_exporttype_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_exporttype_vec_new_empty(arg0):
@@ -927,6 +907,7 @@ class wasm_val_vec_t(Structure):
         ("data", POINTER(wasm_val_t)),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -935,10 +916,7 @@ class wasm_val_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_val_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_val_vec_new_empty(arg0):
@@ -1025,6 +1003,7 @@ class wasm_frame_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_frame_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -1033,10 +1012,7 @@ class wasm_frame_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_frame_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_frame_vec_new_empty(arg0):
@@ -1780,6 +1756,7 @@ class wasm_extern_vec_t(Structure):
         ("data", POINTER(POINTER(wasm_extern_t))),
         ("num_elems", c_size_t),
         ("size_of_elem", c_size_t),
+        ("lock", c_void_p),
     ]
 
     def __eq__(self, other):
@@ -1788,10 +1765,7 @@ class wasm_extern_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}"
-
-    def __del__(self):
-        return wasm_extern_vec_delete(self)
+        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_extern_vec_new_empty(arg0):
@@ -2132,3 +2106,4 @@ def wasm_val_ptr(arg0):
     _wasm_val_ptr.restype = c_void_p
     _wasm_val_ptr.argtypes = [POINTER(wasm_val_t)]
     return _wasm_val_ptr(arg0)
+
