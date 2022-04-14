@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 import sys
 
+# how to open the library file of WAMR
+
 if sys.platform == "linux":
     building_dir = "product-mini/platforms/linux/build"
     libname = "libiwasm.so"

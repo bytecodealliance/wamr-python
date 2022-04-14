@@ -6,7 +6,7 @@
 #
 #It is a generated file. DO NOT EDIT.
 #
-from .additional import *
+from .prologue import *
 from ctypes import *
 
 wasm_byte_t = c_ubyte
@@ -24,9 +24,6 @@ class wasm_byte_vec_t(Structure):
         if not isinstance(other, wasm_byte_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_byte_vec_new_empty(arg0):
@@ -140,9 +137,6 @@ class wasm_limits_t(Structure):
             return False
         return self.min == other.min and self.max == other.max
 
-    def __repr__(self):
-        return f"min={self.min}, max={self.max}"
-
 
 class wasm_valtype_t(Structure):
     pass
@@ -166,9 +160,6 @@ class wasm_valtype_vec_t(Structure):
         if not isinstance(other, wasm_valtype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_valtype_vec_new_empty(arg0):
@@ -251,9 +242,6 @@ class wasm_functype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_functype_vec_new_empty(arg0):
     _wasm_functype_vec_new_empty = libiwasm.wasm_functype_vec_new_empty
@@ -331,9 +319,6 @@ class wasm_globaltype_vec_t(Structure):
         if not isinstance(other, wasm_globaltype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_globaltype_vec_new_empty(arg0):
@@ -413,9 +398,6 @@ class wasm_tabletype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_tabletype_vec_new_empty(arg0):
     _wasm_tabletype_vec_new_empty = libiwasm.wasm_tabletype_vec_new_empty
@@ -494,9 +476,6 @@ class wasm_memorytype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_memorytype_vec_new_empty(arg0):
     _wasm_memorytype_vec_new_empty = libiwasm.wasm_memorytype_vec_new_empty
@@ -568,9 +547,6 @@ class wasm_externtype_vec_t(Structure):
         if not isinstance(other, wasm_externtype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_externtype_vec_new_empty(arg0):
@@ -741,9 +717,6 @@ class wasm_importtype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_importtype_vec_new_empty(arg0):
     _wasm_importtype_vec_new_empty = libiwasm.wasm_importtype_vec_new_empty
@@ -828,9 +801,6 @@ class wasm_exporttype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_exporttype_vec_new_empty(arg0):
     _wasm_exporttype_vec_new_empty = libiwasm.wasm_exporttype_vec_new_empty
@@ -914,9 +884,6 @@ class wasm_val_vec_t(Structure):
         if not isinstance(other, wasm_val_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_val_vec_new_empty(arg0):
@@ -1010,9 +977,6 @@ class wasm_frame_vec_t(Structure):
         if not isinstance(other, wasm_frame_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
-
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
 
 
 def wasm_frame_vec_new_empty(arg0):
@@ -1764,9 +1728,6 @@ class wasm_extern_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
-    def __repr__(self):
-        return f"size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}"
-
 
 def wasm_extern_vec_new_empty(arg0):
     _wasm_extern_vec_new_empty = libiwasm.wasm_extern_vec_new_empty
@@ -1986,124 +1947,4 @@ def wasm_instance_exports(arg0,arg1):
     _wasm_instance_exports.restype = None
     _wasm_instance_exports.argtypes = [POINTER(wasm_instance_t),POINTER(wasm_extern_vec_t)]
     return _wasm_instance_exports(arg0,arg1)
-
-def wasm_valtype_new_i32():
-    _wasm_valtype_new_i32 = libiwasm.wasm_valtype_new_i32
-    _wasm_valtype_new_i32.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_i32.argtypes = None
-    return _wasm_valtype_new_i32()
-
-def wasm_valtype_new_i64():
-    _wasm_valtype_new_i64 = libiwasm.wasm_valtype_new_i64
-    _wasm_valtype_new_i64.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_i64.argtypes = None
-    return _wasm_valtype_new_i64()
-
-def wasm_valtype_new_f32():
-    _wasm_valtype_new_f32 = libiwasm.wasm_valtype_new_f32
-    _wasm_valtype_new_f32.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_f32.argtypes = None
-    return _wasm_valtype_new_f32()
-
-def wasm_valtype_new_f64():
-    _wasm_valtype_new_f64 = libiwasm.wasm_valtype_new_f64
-    _wasm_valtype_new_f64.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_f64.argtypes = None
-    return _wasm_valtype_new_f64()
-
-def wasm_valtype_new_anyref():
-    _wasm_valtype_new_anyref = libiwasm.wasm_valtype_new_anyref
-    _wasm_valtype_new_anyref.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_anyref.argtypes = None
-    return _wasm_valtype_new_anyref()
-
-def wasm_valtype_new_funcref():
-    _wasm_valtype_new_funcref = libiwasm.wasm_valtype_new_funcref
-    _wasm_valtype_new_funcref.restype = POINTER(wasm_valtype_t)
-    _wasm_valtype_new_funcref.argtypes = None
-    return _wasm_valtype_new_funcref()
-
-def wasm_functype_new_0_0():
-    _wasm_functype_new_0_0 = libiwasm.wasm_functype_new_0_0
-    _wasm_functype_new_0_0.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_0_0.argtypes = None
-    return _wasm_functype_new_0_0()
-
-def wasm_functype_new_1_0(arg0):
-    _wasm_functype_new_1_0 = libiwasm.wasm_functype_new_1_0
-    _wasm_functype_new_1_0.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_1_0.argtypes = [POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_1_0(arg0)
-
-def wasm_functype_new_2_0(arg0,arg1):
-    _wasm_functype_new_2_0 = libiwasm.wasm_functype_new_2_0
-    _wasm_functype_new_2_0.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_2_0.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_2_0(arg0,arg1)
-
-def wasm_functype_new_3_0(arg0,arg1,arg2):
-    _wasm_functype_new_3_0 = libiwasm.wasm_functype_new_3_0
-    _wasm_functype_new_3_0.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_3_0.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_3_0(arg0,arg1,arg2)
-
-def wasm_functype_new_0_1(arg0):
-    _wasm_functype_new_0_1 = libiwasm.wasm_functype_new_0_1
-    _wasm_functype_new_0_1.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_0_1.argtypes = [POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_0_1(arg0)
-
-def wasm_functype_new_1_1(arg0,arg1):
-    _wasm_functype_new_1_1 = libiwasm.wasm_functype_new_1_1
-    _wasm_functype_new_1_1.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_1_1.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_1_1(arg0,arg1)
-
-def wasm_functype_new_2_1(arg0,arg1,arg2):
-    _wasm_functype_new_2_1 = libiwasm.wasm_functype_new_2_1
-    _wasm_functype_new_2_1.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_2_1.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_2_1(arg0,arg1,arg2)
-
-def wasm_functype_new_3_1(arg0,arg1,arg2,arg3):
-    _wasm_functype_new_3_1 = libiwasm.wasm_functype_new_3_1
-    _wasm_functype_new_3_1.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_3_1.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_3_1(arg0,arg1,arg2,arg3)
-
-def wasm_functype_new_0_2(arg0,arg1):
-    _wasm_functype_new_0_2 = libiwasm.wasm_functype_new_0_2
-    _wasm_functype_new_0_2.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_0_2.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_0_2(arg0,arg1)
-
-def wasm_functype_new_1_2(arg0,arg1,arg2):
-    _wasm_functype_new_1_2 = libiwasm.wasm_functype_new_1_2
-    _wasm_functype_new_1_2.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_1_2.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_1_2(arg0,arg1,arg2)
-
-def wasm_functype_new_2_2(arg0,arg1,arg2,arg3):
-    _wasm_functype_new_2_2 = libiwasm.wasm_functype_new_2_2
-    _wasm_functype_new_2_2.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_2_2.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_2_2(arg0,arg1,arg2,arg3)
-
-def wasm_functype_new_3_2(arg0,arg1,arg2,arg3,arg4):
-    _wasm_functype_new_3_2 = libiwasm.wasm_functype_new_3_2
-    _wasm_functype_new_3_2.restype = POINTER(wasm_functype_t)
-    _wasm_functype_new_3_2.argtypes = [POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t),POINTER(wasm_valtype_t)]
-    return _wasm_functype_new_3_2(arg0,arg1,arg2,arg3,arg4)
-
-def wasm_val_init_ptr(arg0,arg1):
-    _wasm_val_init_ptr = libiwasm.wasm_val_init_ptr
-    _wasm_val_init_ptr.restype = None
-    _wasm_val_init_ptr.argtypes = [POINTER(wasm_val_t),c_void_p]
-    return _wasm_val_init_ptr(arg0,arg1)
-
-def wasm_val_ptr(arg0):
-    _wasm_val_ptr = libiwasm.wasm_val_ptr
-    _wasm_val_ptr.restype = c_void_p
-    _wasm_val_ptr.argtypes = [POINTER(wasm_val_t)]
-    return _wasm_val_ptr(arg0)
 
