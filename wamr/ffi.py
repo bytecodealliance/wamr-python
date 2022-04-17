@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 import ctypes
-from ctypes import *
 from .binding import *
 
 
@@ -16,6 +15,10 @@ def dereference(p):
     if not isinstance(p, ctypes._Pointer):
         raise RuntimeError("not a pointer")
     return p.contents
+
+
+def create_null_pointer(struct_type):
+    return ctypes.POINTER(struct_type)()
 
 
 def wasm_vec_to_list(vec):
