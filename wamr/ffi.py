@@ -58,6 +58,7 @@ wasm_limits_t.__repr__ = __repr_wasm_limits_t
 def __compare_wasm_valtype_t(self, other):
     if not isinstance(other, wasm_valtype_t):
         return False
+
     return wasm_valtype_kind(byref(self)) == wasm_valtype_kind(byref(other))
 
 
@@ -110,6 +111,7 @@ wasm_valtype_vec_t.__repr__ = __repr_wasm_valtype_vec_t
 def __compare_wasm_functype_t(self, other):
     if not isinstance(other, wasm_functype_t):
         return False
+
     params1 = dereference(wasm_functype_params(byref(self)))
     params2 = dereference(wasm_functype_params(byref(other)))
     results1 = dereference(wasm_functype_results(byref(self)))
@@ -132,6 +134,7 @@ wasm_functype_t.__repr__ = __repr_wasm_functype_t
 def __compare_wasm_globaltype_t(self, other):
     if not isinstance(other, wasm_globaltype_t):
         return False
+
     content1 = dereference(wasm_globaltype_content(byref(self)))
     content2 = dereference(wasm_globaltype_content(byref(other)))
     mutability1 = wasm_globaltype_mutability(byref(self))
@@ -152,6 +155,7 @@ wasm_globaltype_t.__repr__ = __repr_wasm_globaltype_t
 def __compare_wasm_tabletype_t(self, other):
     if not isinstance(other, wasm_tabletype_t):
         return False
+
     element1 = dereference(wasm_tabletype_element(byref(self)))
     element2 = dereference(wasm_tabletype_element(byref(other)))
     limits1 = dereference(wasm_tabletype_limits(byref(self)))
@@ -188,6 +192,9 @@ wasm_memorytype_t.__repr__ = __repr_wasm_memorytype_t
 
 
 def __compare_wasm_externtype_t(self, other):
+    if not isinstance(other, wasm_externtype_t):
+        return False
+
     if wasm_externtype_kind(byref(self)) != wasm_externtype_kind(byref(other)):
         return False
 
@@ -231,6 +238,9 @@ wasm_externtype_t.__repr__ = __repr_wasm_externtype_t
 
 
 def __compare_wasm_importtype_t(self, other):
+    if not isinstance(other, wasm_importtype_t):
+        return False
+
     if dereference(wasm_importtype_module(self)) != dereference(
         wasm_importtype_module(other)
     ):
@@ -255,6 +265,30 @@ def __repr_wasm_importtype_t(self):
 
 wasm_importtype_t.__eq__ = __compare_wasm_importtype_t
 wasm_importtype_t.__repr__ = __repr_wasm_importtype_t
+
+
+def __compare_wasm_exporttype_t(self, other):
+    if not isinstance(other, wasm_exporttype_t):
+        return False
+
+    self_name = dereference(wasm_exporttype_name(byref(self)))
+    other_name = dereference(wasm_exporttype_name(byref(other)))
+    if self_name != other_name:
+        return False
+
+    self_type = dereference(wasm_exporttype_type(byref(self)))
+    other_type = dereference(wasm_exporttype_type(byref(other)))
+    return self_type == other_type
+
+
+def __repr_wasm_externtype_t(self):
+    name = wasm_exporttype_name(byref(self))
+    type = wasm_exporttype_type(byref(self))
+    return f'(export "{dereference(name)}" {dereference(type)})'
+
+
+wasm_exporttype_t.__eq__ = __compare_wasm_exporttype_t
+wasm_exporttype_t.__repr__ = __repr_wasm_externtype_t
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
