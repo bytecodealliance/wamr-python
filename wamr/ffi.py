@@ -21,6 +21,14 @@ def create_null_pointer(struct_type):
     return ctypes.POINTER(struct_type)()
 
 
+def wasm_name_new_from_string(s):
+    name = wasm_name_t()
+    data = s.encode()
+    data = ((ctypes.c_ubyte) * len(s)).from_buffer_copy(data)
+    wasm_byte_vec_new(byref(name), len(s) + 1, data)
+    return name
+
+
 def wasm_vec_to_list(vec):
     """
     Converts a vector or a POINTER(vector) to a list
@@ -71,6 +79,21 @@ def __repr_wasm_valtype_t(self):
 
 wasm_valtype_t.__eq__ = __compare_wasm_valtype_t
 wasm_valtype_t.__repr__ = __repr_wasm_valtype_t
+
+
+def __compare_wasm_byte_vec_t(self, other):
+    self_data = ctypes.cast(self.data, ctypes.c_char_p)
+    other_data = ctypes.cast(other.data, ctypes.c_char_p)
+    return bytes.decode(self_data.value) == bytes.decode(other_data.value)
+
+
+def __repr_wasm_byte_vec_t(self):
+    data = ctypes.cast(self.data, ctypes.c_char_p)
+    return bytes.decode(data.value) if self.size else ""
+
+
+wasm_byte_vec_t.__eq__ = __compare_wasm_byte_vec_t
+wasm_byte_vec_t.__repr__ = __repr_wasm_byte_vec_t
 
 
 def __repr_wasm_valtype_vec_t(self):
@@ -149,6 +172,7 @@ wasm_tabletype_t.__repr__ = __repr_wasm_tabletype_t
 def __compare_wasm_memorytype_t(self, other):
     if not isinstance(other, wasm_memorytype_t):
         return False
+
     limits1 = dereference(wasm_memorytype_limits(byref(self)))
     limits2 = dereference(wasm_memorytype_limits(byref(other)))
     return limits1 == limits2
@@ -161,6 +185,76 @@ def __repr_wasm_memorytype_t(self):
 
 wasm_memorytype_t.__eq__ = __compare_wasm_memorytype_t
 wasm_memorytype_t.__repr__ = __repr_wasm_memorytype_t
+
+
+def __compare_wasm_externtype_t(self, other):
+    if wasm_externtype_kind(byref(self)) != wasm_externtype_kind(byref(other)):
+        return False
+
+    extern_kind = wasm_externtype_kind(byref(self))
+    if WASM_EXTERN_FUNC == extern_kind:
+        return dereference(wasm_externtype_as_functype(self)) == dereference(
+            wasm_externtype_as_functype(other)
+        )
+    elif WASM_EXTERN_GLOBAL == extern_kind:
+        return dereference(wasm_externtype_as_globaltype(self)) == dereference(
+            wasm_externtype_as_globaltype(other)
+        )
+    elif WASM_EXTERN_MEMORY == extern_kind:
+        return dereference(wasm_externtype_as_memorytype(self)) == dereference(
+            wasm_externtype_as_memorytype(other)
+        )
+    elif WASM_EXTERN_TABLE == extern_kind:
+        return dereference(wasm_externtype_as_tabletype(self)) == dereference(
+            wasm_externtype_as_tabletype(other)
+        )
+    else:
+        raise RuntimeError("not a valid wasm_externtype_t")
+
+
+def __repr_wasm_externtype_t(self):
+    extern_kind = wasm_externtype_kind(byref(self))
+    if WASM_EXTERN_FUNC == extern_kind:
+        return str(dereference(wasm_externtype_as_functype(byref(self))))
+    elif WASM_EXTERN_GLOBAL == extern_kind:
+        return str(dereference(wasm_externtype_as_globaltype(byref(self))))
+    elif WASM_EXTERN_MEMORY == extern_kind:
+        return str(dereference(wasm_externtype_as_memorytype(byref(self))))
+    elif WASM_EXTERN_TABLE == extern_kind:
+        return str(dereference(wasm_externtype_as_tabletype(byref(self))))
+    else:
+        raise RuntimeError("not a valid wasm_externtype_t")
+
+
+wasm_externtype_t.__eq__ = __compare_wasm_externtype_t
+wasm_externtype_t.__repr__ = __repr_wasm_externtype_t
+
+
+def __compare_wasm_importtype_t(self, other):
+    if dereference(wasm_importtype_module(self)) != dereference(
+        wasm_importtype_module(other)
+    ):
+        return False
+
+    if dereference(wasm_importtype_name(self)) != dereference(
+        wasm_importtype_name(other)
+    ):
+        return False
+
+    self_type = dereference(wasm_importtype_type(byref(self)))
+    other_type = dereference(wasm_importtype_type(byref(other)))
+    return self_type == other_type
+
+
+def __repr_wasm_importtype_t(self):
+    module = wasm_importtype_module(byref(self))
+    name = wasm_importtype_name(byref(self))
+    type = wasm_importtype_type(byref(self))
+    return f'(import "{dereference(module)}" "{dereference(name)}" {dereference(type)})'
+
+
+wasm_importtype_t.__eq__ = __compare_wasm_importtype_t
+wasm_importtype_t.__repr__ = __repr_wasm_importtype_t
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
