@@ -25,6 +25,9 @@ class wasm_byte_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_byte_vec_new_empty(arg0):
     _wasm_byte_vec_new_empty = libiwasm.wasm_byte_vec_new_empty
@@ -137,6 +140,9 @@ class wasm_limits_t(Structure):
             return False
         return self.min == other.min and self.max == other.max
 
+    def __repr__(self):
+        return f"{{min={self.min}, max={self.max}}}"
+
 
 class wasm_valtype_t(Structure):
     pass
@@ -160,6 +166,9 @@ class wasm_valtype_vec_t(Structure):
         if not isinstance(other, wasm_valtype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_valtype_vec_new_empty(arg0):
@@ -242,6 +251,9 @@ class wasm_functype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_functype_vec_new_empty(arg0):
     _wasm_functype_vec_new_empty = libiwasm.wasm_functype_vec_new_empty
@@ -319,6 +331,9 @@ class wasm_globaltype_vec_t(Structure):
         if not isinstance(other, wasm_globaltype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_globaltype_vec_new_empty(arg0):
@@ -398,6 +413,9 @@ class wasm_tabletype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_tabletype_vec_new_empty(arg0):
     _wasm_tabletype_vec_new_empty = libiwasm.wasm_tabletype_vec_new_empty
@@ -476,6 +494,9 @@ class wasm_memorytype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_memorytype_vec_new_empty(arg0):
     _wasm_memorytype_vec_new_empty = libiwasm.wasm_memorytype_vec_new_empty
@@ -547,6 +568,9 @@ class wasm_externtype_vec_t(Structure):
         if not isinstance(other, wasm_externtype_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_externtype_vec_new_empty(arg0):
@@ -717,6 +741,9 @@ class wasm_importtype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_importtype_vec_new_empty(arg0):
     _wasm_importtype_vec_new_empty = libiwasm.wasm_importtype_vec_new_empty
@@ -801,6 +828,9 @@ class wasm_exporttype_vec_t(Structure):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+
 
 def wasm_exporttype_vec_new_empty(arg0):
     _wasm_exporttype_vec_new_empty = libiwasm.wasm_exporttype_vec_new_empty
@@ -856,9 +886,6 @@ def wasm_exporttype_type(arg0):
     _wasm_exporttype_type.argtypes = [POINTER(wasm_exporttype_t)]
     return _wasm_exporttype_type(arg0)
 
-class wasm_ref_t(Structure):
-    pass
-
 def wasm_val_delete(arg0):
     _wasm_val_delete = libiwasm.wasm_val_delete
     _wasm_val_delete.restype = None
@@ -884,6 +911,9 @@ class wasm_val_vec_t(Structure):
         if not isinstance(other, wasm_val_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_val_vec_new_empty(arg0):
@@ -915,9 +945,6 @@ def wasm_val_vec_delete(arg0):
     _wasm_val_vec_delete.restype = None
     _wasm_val_vec_delete.argtypes = [POINTER(wasm_val_vec_t)]
     return _wasm_val_vec_delete(arg0)
-
-class wasm_ref_t(Structure):
-    pass
 
 def wasm_ref_delete(arg0):
     _wasm_ref_delete = libiwasm.wasm_ref_delete
@@ -977,6 +1004,9 @@ class wasm_frame_vec_t(Structure):
         if not isinstance(other, wasm_frame_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_frame_vec_new_empty(arg0):
@@ -1727,6 +1757,9 @@ class wasm_extern_vec_t(Structure):
         if not isinstance(other, wasm_extern_vec_t):
             return False
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
+
+    def __repr__(self):
+        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
 
 
 def wasm_extern_vec_new_empty(arg0):

@@ -34,7 +34,11 @@ def wasm_vec_to_list(vec):
     Converts a vector or a POINTER(vector) to a list
     vector of type pointers -> list of type pointers
     """
-    known_vec_type = [wasm_valtype_vec_t, wasm_byte_vec_t]
+    known_vec_type = [
+        wasm_byte_vec_t,
+        wasm_importtype_vec_t,
+        wasm_valtype_vec_t,
+    ]
     known_vec_pointer_type = [POINTER(type) for type in known_vec_type]
 
     if any([isinstance(vec, type) for type in known_vec_pointer_type]):
@@ -44,6 +48,14 @@ def wasm_vec_to_list(vec):
         return [vec.data[i] for i in range(vec.num_elems)]
     else:
         raise RuntimeError("not a known vector type")
+
+
+def load_module_file(wasm_content):
+    binary = wasm_byte_vec_t()
+    wasm_byte_vec_new_uninitialized(byref(binary), len(wasm_content))
+    # underlying buffer is not writable
+    binary.data = (ctypes.c_ubyte * len(wasm_content)).from_buffer_copy(wasm_content)
+    return binary
 
 
 # Built-in functions for Structure
@@ -83,14 +95,20 @@ wasm_valtype_t.__repr__ = __repr_wasm_valtype_t
 
 
 def __compare_wasm_byte_vec_t(self, other):
-    self_data = ctypes.cast(self.data, ctypes.c_char_p)
-    other_data = ctypes.cast(other.data, ctypes.c_char_p)
-    return bytes.decode(self_data.value) == bytes.decode(other_data.value)
+    if not isinstance(other, wasm_byte_vec_t):
+        return False
+
+    if self.num_elems != other.num_elems:
+        return False
+
+    self_data = bytes(self.data[: self.num_elems])
+    other_data = bytes(other.data[: other.num_elems])
+    return self_data.decode() == other_data.decode()
 
 
 def __repr_wasm_byte_vec_t(self):
-    data = ctypes.cast(self.data, ctypes.c_char_p)
-    return bytes.decode(data.value) if self.size else ""
+    data = bytes(self.data[: self.num_elems])
+    return data.decode() if self.size else ""
 
 
 wasm_byte_vec_t.__eq__ = __compare_wasm_byte_vec_t
@@ -267,6 +285,18 @@ wasm_importtype_t.__eq__ = __compare_wasm_importtype_t
 wasm_importtype_t.__repr__ = __repr_wasm_importtype_t
 
 
+def __repr_wasm_importtype_vec_t(self):
+    ret = ""
+    for i in range(self.num_elems):
+        itt = dereference(self.data[i])
+        ret += str(itt)
+        ret += "\n"
+    return ret
+
+
+wasm_importtype_vec_t.__repr__ = __repr_wasm_importtype_vec_t
+
+
 def __compare_wasm_exporttype_t(self, other):
     if not isinstance(other, wasm_exporttype_t):
         return False
@@ -289,6 +319,55 @@ def __repr_wasm_externtype_t(self):
 
 wasm_exporttype_t.__eq__ = __compare_wasm_exporttype_t
 wasm_exporttype_t.__repr__ = __repr_wasm_externtype_t
+
+
+def __compare_wasm_val_t(self, other):
+    if not isinstance(other, wasm_val_t):
+        return False
+
+    if self.kind != other.kind:
+        return False
+
+    if WASM_I32 == self.kind:
+        return self.of.i32 == other.of.i32
+    elif WASM_I64 == self.kind:
+        return self.of.i64 == other.of.i64
+    elif WASM_F32 == self.kind:
+        return self.of.f32 == other.of.f32
+    elif WASM_F64 == self.kind:
+        return self.of.f64 == other.of.f63
+    elif WASM_ANYREF == self.kind:
+        raise RuntimeError("FIXME")
+    else:
+        raise RuntimeError("not a valid val kind")
+
+
+def __repr_wasm_val_t(self):
+    if WASM_I32 == self.kind:
+        return f"i32 {self.of.i32}"
+    elif WASM_I64 == self.kind:
+        return f"i64 {self.of.i64}"
+    elif WASM_F32 == self.kind:
+        return f"f32 {self.of.f32}"
+    elif WASM_F64 == self.kind:
+        return f"f64 {self.of.f64}"
+    elif WASM_ANYREF == self.kind:
+        return f"anyref {self.of.ref}"
+    else:
+        raise RuntimeError("not a valid val kind")
+
+
+wasm_val_t.__repr__ = __repr_wasm_val_t
+wasm_val_t.__eq__ = __compare_wasm_val_t
+
+
+def __repr_wasm_trap_t(self):
+    message = wasm_message_t()
+    wasm_trap_message(self, message)
+    return str(message)
+
+
+wasm_trap_t.__repr__ = __repr_wasm_trap_t
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
@@ -341,3 +420,38 @@ def wasm_functype_new_2_1(p1, p2, r1):
 
 def wasm_functype_new_3_1(p1, p2, p3, r1):
     return __wasm_functype_new([p1, p2, p3], [r1])
+
+
+def wasm_i32_val(i):
+    v = wasm_val_t()
+    v.kind = WASM_I32
+    v.of.i32 = i
+    return v
+
+
+def wasm_i64_val(i):
+    v = wasm_val_t()
+    v.kind = WASM_I64
+    v.of.i64 = i
+    return v
+
+
+def wasm_f32_val(z):
+    v = wasm_val_t()
+    v.kind = WASM_F32
+    v.of.f32 = z
+    return v
+
+
+def wasm_f64_val(z):
+    v = wasm_val_t()
+    v.kind = WASM_F64
+    v.of.f64 = z
+    return v
+
+
+def wasm_ref_val(r):
+    v = wasm_val_t()
+    v.kind = WASM_ANYREF
+    v.of.ref = ctypes.pointer(r)
+    return v

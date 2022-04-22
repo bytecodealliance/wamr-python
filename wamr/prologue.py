@@ -4,7 +4,7 @@
 # Copyright (C) 2019 Intel Corporation.  All rights reserved.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-from ctypes import *
+import ctypes
 import os
 from pathlib import Path
 import sys
@@ -36,21 +36,25 @@ libpath = wamr_dir.joinpath(building_dir).joinpath(libname).resolve()
 if not libpath.exists():
     raise RuntimeError(f"not found precompiled wamr library at {libpath}")
 
-libiwasm = cdll.LoadLibrary(libpath)
+libiwasm = ctypes.cdll.LoadLibrary(libpath)
 
 
-class _OF(Union):
+class wasm_ref_t(ctypes.Structure):
+    pass
+
+
+class wasm_val_union(ctypes.Union):
     _fields_ = [
-        ("i32", c_int32),
-        ("i64", c_int64),
-        ("f32", c_float),
-        ("f64", c_double),
+        ("i32", ctypes.c_int32),
+        ("i64", ctypes.c_int64),
+        ("f32", ctypes.c_float),
+        ("f64", ctypes.c_double),
+        ("ref", ctypes.POINTER(wasm_ref_t)),
     ]
 
 
-class wasm_val_t(Structure):
-    _anonymous_ = ("of",)
+class wasm_val_t(ctypes.Structure):
     _fields_ = [
-        ("kind", c_uint8),
-        ("of", _OF),
+        ("kind", ctypes.c_uint8),
+        ("of", wasm_val_union),
     ]

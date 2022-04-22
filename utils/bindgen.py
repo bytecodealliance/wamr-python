@@ -20,6 +20,37 @@ BINDING_PY = "wamr/binding.py"
 # 4 spaces as default indent
 INDENT = "    "
 
+IGNORE_SYMOLS = (
+    "wasm_engine_new_with_args",
+    "wasm_valkind_is_num",
+    "wasm_valkind_is_ref",
+    "wasm_valtype_is_num",
+    "wasm_valtype_is_ref",
+    "wasm_valtype_new_i32",
+    "wasm_valtype_new_i64",
+    "wasm_valtype_new_f32",
+    "wasm_valtype_new_f64",
+    "wasm_valtype_new_anyref",
+    "wasm_valtype_new_funcref",
+    "wasm_functype_new_0_0",
+    "wasm_functype_new_0_0",
+    "wasm_functype_new_1_0",
+    "wasm_functype_new_2_0",
+    "wasm_functype_new_3_0",
+    "wasm_functype_new_0_1",
+    "wasm_functype_new_1_1",
+    "wasm_functype_new_2_1",
+    "wasm_functype_new_3_1",
+    "wasm_functype_new_0_2",
+    "wasm_functype_new_1_2",
+    "wasm_functype_new_2_2",
+    "wasm_functype_new_3_2",
+    "wasm_val_init_ptr",
+    "wasm_val_ptr",
+    "wasm_val_t",
+    "wasm_ref_t",
+)
+
 
 class Visitor(c_ast.NodeVisitor):
     def __init__(self):
@@ -118,7 +149,10 @@ class Visitor(c_ast.NodeVisitor):
             content = content[:-2] + '}}"'
             return content
 
-        if not node.name or node.name in ["__locale_struct", "wasm_val_t"]:
+        if not node.name or not node.name.lower().startswith("wasm"):
+            return
+
+        if node.name in IGNORE_SYMOLS:
             return
 
         name = node.name
@@ -139,6 +173,9 @@ class Visitor(c_ast.NodeVisitor):
                 f"{INDENT*2}if not isinstance(other, {name}):\n"
                 f"{INDENT*3}return False\n"
                 f"{gen_equal(info, INDENT*2)}\n"
+                f"\n"
+                f"{INDENT}def __repr__(self):\n"
+                f"{gen_repr(info, INDENT*2)}\n"
                 f"\n"
             )
 
@@ -180,34 +217,7 @@ class Visitor(c_ast.NodeVisitor):
             return
 
         # workaround for bug and inlines
-        if func_name in (
-            "wasm_engine_new_with_args",
-            "wasm_valkind_is_num",
-            "wasm_valkind_is_ref",
-            "wasm_valtype_is_num",
-            "wasm_valtype_is_ref",
-            "wasm_valtype_new_i32",
-            "wasm_valtype_new_i64",
-            "wasm_valtype_new_f32",
-            "wasm_valtype_new_f64",
-            "wasm_valtype_new_anyref",
-            "wasm_valtype_new_funcref",
-            "wasm_functype_new_0_0",
-            "wasm_functype_new_0_0",
-            "wasm_functype_new_1_0",
-            "wasm_functype_new_2_0",
-            "wasm_functype_new_3_0",
-            "wasm_functype_new_0_1",
-            "wasm_functype_new_1_1",
-            "wasm_functype_new_2_1",
-            "wasm_functype_new_3_1",
-            "wasm_functype_new_0_2",
-            "wasm_functype_new_1_2",
-            "wasm_functype_new_2_2",
-            "wasm_functype_new_3_2",
-            "wasm_val_init_ptr",
-            "wasm_val_ptr",
-        ):
+        if func_name in IGNORE_SYMOLS:
             return
 
         params_len = 0
