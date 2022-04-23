@@ -59,6 +59,9 @@ def load_module_file(wasm_content):
 
 
 # Built-in functions for Structure
+wasm_finalizer = CFUNCTYPE(None, c_void_p)
+
+
 def __repr_wasm_limits_t(self):
     return f"{self.min:#x} {self.max:#x}"
 
@@ -389,6 +392,29 @@ def __repr_wasm_func_t(self):
 
 wasm_func_t.__repr__ = __repr_wasm_func_t
 
+
+def __repr_wasm_global_t(self):
+    gt = wasm_global_type(self)
+    return f"{str(dereference(gt))[:-1]} ... )"
+
+
+wasm_global_t.__repr__ = __repr_wasm_global_t
+
+
+def __repr_wasm_table_t(self):
+    tt = wasm_table_type(self)
+    return f"{str(dereference(tt))[:-1]} ... )"
+
+
+wasm_table_t.__repr__ = __repr_wasm_table_t
+
+
+def __repr_wasm_memory_t(self):
+    mt = wasm_memory_type(self)
+    return f"{str(dereference(mt))[:-1]} ... )"
+
+
+wasm_memory_t.__repr__ = __repr_wasm_memory_t
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
