@@ -979,7 +979,7 @@ def wasm_ref_set_host_info(arg0,arg1):
 def wasm_ref_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_ref_set_host_info_with_finalizer = libiwasm.wasm_ref_set_host_info_with_finalizer
     _wasm_ref_set_host_info_with_finalizer.restype = None
-    _wasm_ref_set_host_info_with_finalizer.argtypes = [POINTER(wasm_ref_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_ref_set_host_info_with_finalizer.argtypes = [POINTER(wasm_ref_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_ref_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 class wasm_frame_t(Structure):
@@ -1107,7 +1107,7 @@ def wasm_trap_set_host_info(arg0,arg1):
 def wasm_trap_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_trap_set_host_info_with_finalizer = libiwasm.wasm_trap_set_host_info_with_finalizer
     _wasm_trap_set_host_info_with_finalizer.restype = None
-    _wasm_trap_set_host_info_with_finalizer.argtypes = [POINTER(wasm_trap_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_trap_set_host_info_with_finalizer.argtypes = [POINTER(wasm_trap_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_trap_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_trap_as_ref(arg0):
@@ -1194,7 +1194,7 @@ def wasm_foreign_set_host_info(arg0,arg1):
 def wasm_foreign_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_foreign_set_host_info_with_finalizer = libiwasm.wasm_foreign_set_host_info_with_finalizer
     _wasm_foreign_set_host_info_with_finalizer.restype = None
-    _wasm_foreign_set_host_info_with_finalizer.argtypes = [POINTER(wasm_foreign_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_foreign_set_host_info_with_finalizer.argtypes = [POINTER(wasm_foreign_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_foreign_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_foreign_as_ref(arg0):
@@ -1313,7 +1313,7 @@ def wasm_func_set_host_info(arg0,arg1):
 def wasm_func_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_func_set_host_info_with_finalizer = libiwasm.wasm_func_set_host_info_with_finalizer
     _wasm_func_set_host_info_with_finalizer.restype = None
-    _wasm_func_set_host_info_with_finalizer.argtypes = [POINTER(wasm_func_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_func_set_host_info_with_finalizer.argtypes = [POINTER(wasm_func_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_func_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_func_as_ref(arg0):
@@ -1340,21 +1340,9 @@ def wasm_ref_as_func_const(arg0):
     _wasm_ref_as_func_const.argtypes = [POINTER(wasm_ref_t)]
     return _wasm_ref_as_func_const(arg0)
 
-def wasm_func_callback_t(arg0,arg1):
-    _wasm_func_callback_t = libiwasm.wasm_func_callback_t
-    _wasm_func_callback_t.restype = POINTER(wasm_trap_t)
-    _wasm_func_callback_t.argtypes = [POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t)]
-    return _wasm_func_callback_t(arg0,arg1)
+wasm_func_callback_t = CFUNCTYPE(c_void_p,POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t))
 
-wasm_func_callback_t = POINTER(CFUNCTYPE(POINTER(wasm_trap_t),POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t)))
-
-def wasm_func_callback_with_env_t(arg0,arg1,arg2):
-    _wasm_func_callback_with_env_t = libiwasm.wasm_func_callback_with_env_t
-    _wasm_func_callback_with_env_t.restype = POINTER(wasm_trap_t)
-    _wasm_func_callback_with_env_t.argtypes = [c_void_p,POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t)]
-    return _wasm_func_callback_with_env_t(arg0,arg1,arg2)
-
-wasm_func_callback_with_env_t = POINTER(CFUNCTYPE(POINTER(wasm_trap_t),c_void_p,POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t)))
+wasm_func_callback_with_env_t = CFUNCTYPE(c_void_p,c_void_p,POINTER(wasm_val_vec_t),POINTER(wasm_val_vec_t))
 
 def wasm_func_new(arg0,arg1,arg2):
     _wasm_func_new = libiwasm.wasm_func_new
@@ -1365,7 +1353,7 @@ def wasm_func_new(arg0,arg1,arg2):
 def wasm_func_new_with_env(arg0,arg1,arg2,arg3,arg4):
     _wasm_func_new_with_env = libiwasm.wasm_func_new_with_env
     _wasm_func_new_with_env.restype = POINTER(wasm_func_t)
-    _wasm_func_new_with_env.argtypes = [POINTER(wasm_store_t),POINTER(wasm_functype_t),wasm_func_callback_with_env_t,c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_func_new_with_env.argtypes = [POINTER(wasm_store_t),POINTER(wasm_functype_t),wasm_func_callback_with_env_t,c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_func_new_with_env(arg0,arg1,arg2,arg3,arg4)
 
 def wasm_func_type(arg0):
@@ -1428,7 +1416,7 @@ def wasm_global_set_host_info(arg0,arg1):
 def wasm_global_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_global_set_host_info_with_finalizer = libiwasm.wasm_global_set_host_info_with_finalizer
     _wasm_global_set_host_info_with_finalizer.restype = None
-    _wasm_global_set_host_info_with_finalizer.argtypes = [POINTER(wasm_global_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_global_set_host_info_with_finalizer.argtypes = [POINTER(wasm_global_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_global_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_global_as_ref(arg0):
@@ -1515,7 +1503,7 @@ def wasm_table_set_host_info(arg0,arg1):
 def wasm_table_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_table_set_host_info_with_finalizer = libiwasm.wasm_table_set_host_info_with_finalizer
     _wasm_table_set_host_info_with_finalizer.restype = None
-    _wasm_table_set_host_info_with_finalizer.argtypes = [POINTER(wasm_table_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_table_set_host_info_with_finalizer.argtypes = [POINTER(wasm_table_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_table_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_table_as_ref(arg0):
@@ -1616,7 +1604,7 @@ def wasm_memory_set_host_info(arg0,arg1):
 def wasm_memory_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_memory_set_host_info_with_finalizer = libiwasm.wasm_memory_set_host_info_with_finalizer
     _wasm_memory_set_host_info_with_finalizer.restype = None
-    _wasm_memory_set_host_info_with_finalizer.argtypes = [POINTER(wasm_memory_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_memory_set_host_info_with_finalizer.argtypes = [POINTER(wasm_memory_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_memory_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_memory_as_ref(arg0):
@@ -1717,7 +1705,7 @@ def wasm_extern_set_host_info(arg0,arg1):
 def wasm_extern_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_extern_set_host_info_with_finalizer = libiwasm.wasm_extern_set_host_info_with_finalizer
     _wasm_extern_set_host_info_with_finalizer.restype = None
-    _wasm_extern_set_host_info_with_finalizer.argtypes = [POINTER(wasm_extern_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_extern_set_host_info_with_finalizer.argtypes = [POINTER(wasm_extern_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_extern_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_extern_as_ref(arg0):
@@ -1936,7 +1924,7 @@ def wasm_instance_set_host_info(arg0,arg1):
 def wasm_instance_set_host_info_with_finalizer(arg0,arg1,arg2):
     _wasm_instance_set_host_info_with_finalizer = libiwasm.wasm_instance_set_host_info_with_finalizer
     _wasm_instance_set_host_info_with_finalizer.restype = None
-    _wasm_instance_set_host_info_with_finalizer.argtypes = [POINTER(wasm_instance_t),c_void_p,POINTER(CFUNCTYPE(None,c_void_p))]
+    _wasm_instance_set_host_info_with_finalizer.argtypes = [POINTER(wasm_instance_t),c_void_p,CFUNCTYPE(None,c_void_p)]
     return _wasm_instance_set_host_info_with_finalizer(arg0,arg1,arg2)
 
 def wasm_instance_as_ref(arg0):

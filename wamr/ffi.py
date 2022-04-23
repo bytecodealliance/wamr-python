@@ -4,7 +4,6 @@
 # Copyright (C) 2019 Intel Corporation.  All rights reserved.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-import ctypes
 from .binding import *
 
 
@@ -36,6 +35,7 @@ def wasm_vec_to_list(vec):
     """
     known_vec_type = [
         wasm_byte_vec_t,
+        wasm_exporttype_vec_t,
         wasm_importtype_vec_t,
         wasm_valtype_vec_t,
     ]
@@ -321,6 +321,18 @@ wasm_exporttype_t.__eq__ = __compare_wasm_exporttype_t
 wasm_exporttype_t.__repr__ = __repr_wasm_externtype_t
 
 
+def __repr_wasm_exporttype_vec_t(self):
+    ret = ""
+    for i in range(self.num_elems):
+        itt = dereference(self.data[i])
+        ret += str(itt)
+        ret += "\n"
+    return ret
+
+
+wasm_exporttype_vec_t.__repr__ = __repr_wasm_exporttype_vec_t
+
+
 def __compare_wasm_val_t(self, other):
     if not isinstance(other, wasm_val_t):
         return False
@@ -368,6 +380,15 @@ def __repr_wasm_trap_t(self):
 
 
 wasm_trap_t.__repr__ = __repr_wasm_trap_t
+
+
+def __repr_wasm_func_t(self):
+    ft = wasm_func_type(self)
+    return f"{str(dereference(ft))[:-1]} ... )"
+
+
+wasm_func_t.__repr__ = __repr_wasm_func_t
+
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
@@ -453,5 +474,13 @@ def wasm_f64_val(z):
 def wasm_ref_val(r):
     v = wasm_val_t()
     v.kind = WASM_ANYREF
-    v.of.ref = ctypes.pointer(r)
+    v.of.ref = pointer(r)
     return v
+
+
+def wasm_func_cb_decl(func):
+    return wasm_func_callback_t(func)
+
+
+def wasm_func_with_env_cb_decl(func):
+    return wasm_func_callback_with_env_t(func)

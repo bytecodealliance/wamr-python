@@ -49,6 +49,8 @@ IGNORE_SYMOLS = (
     "wasm_val_ptr",
     "wasm_val_t",
     "wasm_ref_t",
+    # "wasm_func_callback_t",
+    # "wasm_func_callback_with_env_t",
 )
 
 
@@ -83,7 +85,16 @@ class Visitor(c_ast.NodeVisitor):
             return self.get_type_name(type.type)
         elif isinstance(type, c_ast.PtrDecl):
             pointed_type = self.get_type_name(type.type)
-            return "c_void_p" if "None" == pointed_type else f"POINTER({pointed_type})"
+
+            if isinstance(type.type, c_ast.FuncDecl):
+                # CFUCNTYPE is a pointer of function
+                return pointed_type
+
+            if "None" == pointed_type:
+                return "c_void_p"
+
+            return f"POINTER({pointed_type})"
+
         elif isinstance(type, c_ast.ArrayDecl):
             return f"POINTER({self.get_type_name(type.type)})"
         elif isinstance(type, c_ast.IdentifierType):
@@ -111,7 +122,11 @@ class Visitor(c_ast.NodeVisitor):
             return type.name
         elif isinstance(type, c_ast.FuncDecl):
             content = "CFUNCTYPE("
-            content += f"{self.get_type_name(type.type)}"
+            if isinstance(type.type, c_ast.PtrDecl):
+                # there is a bug in CFUNCTYPE if the result type is a pointer
+                content += "c_void_p"
+            else:
+                content += f"{self.get_type_name(type.type)}"
             content += f",{self.get_type_name(type.args)}" if type.args else ""
             content += ")"
             return content
@@ -195,6 +210,9 @@ class Visitor(c_ast.NodeVisitor):
         if not node.name.startswith("wasm_"):
             return
 
+        if node.name in IGNORE_SYMOLS:
+            return
+
         self.visit(node.type)
 
         if node.name == self.get_type_name(node.type):
@@ -213,10 +231,9 @@ class Visitor(c_ast.NodeVisitor):
         else:
             raise Exception(f"unexpected type in FuncDecl: {type}")
 
-        if not func_name.startswith("wasm_"):
+        if not func_name.startswith("wasm_") or func_name.endswith("_t"):
             return
 
-        # workaround for bug and inlines
         if func_name in IGNORE_SYMOLS:
             return
 
