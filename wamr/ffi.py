@@ -4,20 +4,20 @@
 # Copyright (C) 2019 Intel Corporation.  All rights reserved.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
+
+# FIXME: wildcard import
 from .binding import *
-
-
-def dereference(p):
-    """
-    fetch the conents of a pointer
-    """
-    if not isinstance(p, ctypes._Pointer):
-        raise RuntimeError("not a pointer")
-    return p.contents
 
 
 def create_null_pointer(struct_type):
     return ctypes.POINTER(struct_type)()
+
+
+def is_null_pointer(pointer):
+    if isinstance(pointer, ctypes._Pointer):
+        return False if pointer else True
+    else:
+        raise RuntimeError("not a pointer")
 
 
 def wasm_name_new_from_string(s):
@@ -35,6 +35,7 @@ def wasm_vec_to_list(vec):
     """
     known_vec_type = [
         wasm_byte_vec_t,
+        wasm_extern_vec_t,
         wasm_exporttype_vec_t,
         wasm_importtype_vec_t,
         wasm_valtype_vec_t,
@@ -50,11 +51,20 @@ def wasm_vec_to_list(vec):
         raise RuntimeError("not a known vector type")
 
 
+def list_to_carray(elem_type, *args):
+    """
+    Converts a python list into a C array
+    """
+    data = (elem_type * len(args))(*args)
+    return data
+
+
 def load_module_file(wasm_content):
     binary = wasm_byte_vec_t()
-    wasm_byte_vec_new_uninitialized(byref(binary), len(wasm_content))
-    # underlying buffer is not writable
-    binary.data = (ctypes.c_ubyte * len(wasm_content)).from_buffer_copy(wasm_content)
+    wasm_byte_vec_new_uninitialized(binary, len(wasm_content))
+    # has to use malloced memory.
+    ctypes.memmove(binary.data, wasm_content, len(wasm_content))
+    binary.num_elems = len(wasm_content)
     return binary
 
 
@@ -116,17 +126,6 @@ def __repr_wasm_byte_vec_t(self):
 
 wasm_byte_vec_t.__eq__ = __compare_wasm_byte_vec_t
 wasm_byte_vec_t.__repr__ = __repr_wasm_byte_vec_t
-
-
-def __repr_wasm_valtype_vec_t(self):
-    return (
-        " ".join([str(dereference(self.data[i])) for i in range(self.size)])
-        if self.size
-        else "EMPTY"
-    )
-
-
-wasm_valtype_vec_t.__repr__ = __repr_wasm_valtype_vec_t
 
 
 def __compare_wasm_functype_t(self, other):
@@ -288,18 +287,6 @@ wasm_importtype_t.__eq__ = __compare_wasm_importtype_t
 wasm_importtype_t.__repr__ = __repr_wasm_importtype_t
 
 
-def __repr_wasm_importtype_vec_t(self):
-    ret = ""
-    for i in range(self.num_elems):
-        itt = dereference(self.data[i])
-        ret += str(itt)
-        ret += "\n"
-    return ret
-
-
-wasm_importtype_vec_t.__repr__ = __repr_wasm_importtype_vec_t
-
-
 def __compare_wasm_exporttype_t(self, other):
     if not isinstance(other, wasm_exporttype_t):
         return False
@@ -322,18 +309,6 @@ def __repr_wasm_externtype_t(self):
 
 wasm_exporttype_t.__eq__ = __compare_wasm_exporttype_t
 wasm_exporttype_t.__repr__ = __repr_wasm_externtype_t
-
-
-def __repr_wasm_exporttype_vec_t(self):
-    ret = ""
-    for i in range(self.num_elems):
-        itt = dereference(self.data[i])
-        ret += str(itt)
-        ret += "\n"
-    return ret
-
-
-wasm_exporttype_vec_t.__repr__ = __repr_wasm_exporttype_vec_t
 
 
 def __compare_wasm_val_t(self, other):
@@ -385,6 +360,36 @@ def __repr_wasm_trap_t(self):
 wasm_trap_t.__repr__ = __repr_wasm_trap_t
 
 
+def __repr_wasm_module_t(self):
+    imports = wasm_importtype_vec_t()
+    wasm_module_imports(self, imports)
+
+    exports = wasm_exporttype_vec_t()
+    wasm_module_exports(self, exports)
+
+    ret = "(module"
+    ret += str(imports).replace("(import", "\n  (import")
+    ret += str(exports).replace("(export", "\n  (export")
+    ret += "\n)"
+    return ret
+
+
+wasm_module_t.__repr__ = __repr_wasm_module_t
+
+
+def __repr_wasm_instance_t(self):
+    exports = wasm_extern_vec_t()
+    wasm_instance_exports(self, exports)
+
+    ret = "(instance"
+    ret += str(exports).replace("(export", "\n (export")
+    ret += "\n)"
+    return ret
+
+
+wasm_instance_t.__repr__ = __repr_wasm_instance_t
+
+
 def __repr_wasm_func_t(self):
     ft = wasm_func_type(self)
     return f"{str(dereference(ft))[:-1]} ... )"
@@ -415,6 +420,33 @@ def __repr_wasm_memory_t(self):
 
 
 wasm_memory_t.__repr__ = __repr_wasm_memory_t
+
+
+def __repr_wasm_extern_t(self):
+    type = wasm_extern_type(self)
+    kind = wasm_externtype_kind(type)
+
+    ret = "(export "
+    if WASM_EXTERN_FUNC == kind:
+        ft = wasm_externtype_as_functype(type)
+        ret += str(dereference(ft))
+    elif WASM_EXTERN_GLOBAL == kind:
+        gt = wasm_externtype_as_globaltype(type)
+        ret += str(dereference(gt))
+    elif WASM_EXTERN_MEMORY == kind:
+        mt = wasm_externtype_as_memorytype(type)
+        ret += str(dereference(mt))
+    elif WASM_EXTERN_TABLE == kind:
+        tt = wasm_externtype_as_tabletype(self)
+        ret += str(dereference(tt))
+    else:
+        raise RuntimeError("not a valid extern kind")
+    ret += ")"
+    return ret
+
+
+wasm_extern_t.__repr__ = __repr_wasm_extern_t
+
 
 # Function Types construction short-hands
 def __wasm_functype_new(param_list, result_list):
@@ -494,13 +526,6 @@ def wasm_f64_val(z):
     v = wasm_val_t()
     v.kind = WASM_F64
     v.of.f64 = z
-    return v
-
-
-def wasm_ref_val(r):
-    v = wasm_val_t()
-    v.kind = WASM_ANYREF
-    v.of.ref = pointer(r)
     return v
 
 

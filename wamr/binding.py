@@ -9,6 +9,13 @@
 from .prologue import *
 from ctypes import *
 
+
+def dereference(p):
+    if not isinstance(p, ctypes._Pointer):
+        raise RuntimeError("not a pointer")
+    return p.contents
+
+
 wasm_byte_t = c_ubyte
 
 class wasm_byte_vec_t(Structure):
@@ -26,7 +33,12 @@ class wasm_byte_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(self.data[i])
+                ret += " "
+        return ret
+
 
 
 def wasm_byte_vec_new_empty(arg0):
@@ -168,7 +180,12 @@ class wasm_valtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_valtype_vec_new_empty(arg0):
@@ -252,7 +269,12 @@ class wasm_functype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_functype_vec_new_empty(arg0):
@@ -333,7 +355,12 @@ class wasm_globaltype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_globaltype_vec_new_empty(arg0):
@@ -414,7 +441,12 @@ class wasm_tabletype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_tabletype_vec_new_empty(arg0):
@@ -495,7 +527,12 @@ class wasm_memorytype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_memorytype_vec_new_empty(arg0):
@@ -570,7 +607,12 @@ class wasm_externtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_externtype_vec_new_empty(arg0):
@@ -742,7 +784,12 @@ class wasm_importtype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_importtype_vec_new_empty(arg0):
@@ -829,7 +876,12 @@ class wasm_exporttype_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_exporttype_vec_new_empty(arg0):
@@ -913,7 +965,12 @@ class wasm_val_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(self.data[i])
+                ret += " "
+        return ret
+
 
 
 def wasm_val_vec_new_empty(arg0):
@@ -1006,7 +1063,12 @@ class wasm_frame_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_frame_vec_new_empty(arg0):
@@ -1747,7 +1809,12 @@ class wasm_extern_vec_t(Structure):
         return self.size == other.size and self.num_elems == other.num_elems and self.size_of_elem == other.size_of_elem
 
     def __repr__(self):
-        return f"{{size={self.size}, data={self.data}, num_elems={self.num_elems}, size_of_elem={self.size_of_elem}, lock={self.lock}}}"
+        ret = ""
+        for i in range(self.num_elems):
+                ret += str(dereference(self.data[i]))
+                ret += " "
+        return ret
+
 
 
 def wasm_extern_vec_new_empty(arg0):

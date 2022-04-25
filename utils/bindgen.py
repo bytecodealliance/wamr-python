@@ -78,6 +78,13 @@ class Visitor(c_ast.NodeVisitor):
             "from .prologue import *\n"
             "from ctypes import *\n"
             "\n"
+            "\n"
+            "def dereference(p):\n"
+            "    if not isinstance(p, ctypes._Pointer):\n"
+            '        raise RuntimeError("not a pointer")\n'
+            "    return p.contents\n"
+            "\n"
+            "\n"
         )
 
     def get_type_name(self, type):
@@ -164,6 +171,21 @@ class Visitor(c_ast.NodeVisitor):
             content = content[:-2] + '}}"'
             return content
 
+        def gen_vector_repr(info, indent):
+            content = f'{indent}ret = ""\n'
+            content += f"{indent}for i in range(self.num_elems):\n"
+
+            if 1 == info["data"].count("POINTER"):
+                # pointer
+                content += f"{2*indent}ret += str(self.data[i])\n"
+            else:
+                # pointer of pointer
+                content += f"{2*indent}ret += str(dereference(self.data[i]))\n"
+
+            content += f'{2*indent}ret += " "\n'
+            content += f"{indent}return ret\n"
+            return content
+
         if not node.name or not node.name.lower().startswith("wasm"):
             return
 
@@ -190,9 +212,13 @@ class Visitor(c_ast.NodeVisitor):
                 f"{gen_equal(info, INDENT*2)}\n"
                 f"\n"
                 f"{INDENT}def __repr__(self):\n"
-                f"{gen_repr(info, INDENT*2)}\n"
-                f"\n"
             )
+            self.ret += (
+                f"{gen_vector_repr(info, INDENT*2)}\n"
+                if name.endswith("_vec_t")
+                else f"{gen_repr(info, INDENT*2)}\n"
+            )
+            self.ret += "\n"
 
         else:
             self.ret += f"class {name}(Structure):\n{INDENT}pass\n"
