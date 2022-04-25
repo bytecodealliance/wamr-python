@@ -6,14 +6,9 @@
 #
 #It is a generated file. DO NOT EDIT.
 #
-from .prologue import *
 from ctypes import *
 
-
-def dereference(p):
-    if not isinstance(p, ctypes._Pointer):
-        raise RuntimeError("not a pointer")
-    return p.contents
+from .ffi import dereference, libiwasm, wasm_ref_t, wasm_val_t
 
 
 wasm_byte_t = c_ubyte
@@ -72,18 +67,6 @@ def wasm_byte_vec_delete(arg0):
     return _wasm_byte_vec_delete(arg0)
 
 wasm_name_t = wasm_byte_vec_t
-
-def wasm_name_new_from_string(arg0,arg1):
-    _wasm_name_new_from_string = libiwasm.wasm_name_new_from_string
-    _wasm_name_new_from_string.restype = None
-    _wasm_name_new_from_string.argtypes = [POINTER(wasm_name_t),POINTER(c_char)]
-    return _wasm_name_new_from_string(arg0,arg1)
-
-def wasm_name_new_from_string_nt(arg0,arg1):
-    _wasm_name_new_from_string_nt = libiwasm.wasm_name_new_from_string_nt
-    _wasm_name_new_from_string_nt.restype = None
-    _wasm_name_new_from_string_nt.argtypes = [POINTER(wasm_name_t),POINTER(c_char)]
-    return _wasm_name_new_from_string_nt(arg0,arg1)
 
 class wasm_config_t(Structure):
     pass

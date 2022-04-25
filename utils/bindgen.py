@@ -4,6 +4,10 @@
 # Copyright (C) 2019 Intel Corporation.  All rights reserved.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-module-docstring
+
 """
 - Need to run *download_wamr.py* firstly.
 - Parse *./wasm-micro-runtime/core/iwasm/include/wasm_c_api.h* and generate
@@ -11,12 +15,13 @@
 """
 import os
 import pathlib
-from pycparser import c_ast, parse_file
 import shutil
 import sys
 
+from pycparser import c_ast, parse_file
+
 WASM_C_API_HEADER = "core/iwasm/include/wasm_c_api.h"
-BINDING_PY = "wamr/binding.py"
+BINDING_PATH = "wamr/binding.py"
 # 4 spaces as default indent
 INDENT = "    "
 
@@ -49,8 +54,8 @@ IGNORE_SYMOLS = (
     "wasm_val_ptr",
     "wasm_val_t",
     "wasm_ref_t",
-    # "wasm_func_callback_t",
-    # "wasm_func_callback_with_env_t",
+    "wasm_name_new_from_string",
+    "wasm_name_new_from_string_nt",
 )
 
 
@@ -60,7 +65,9 @@ class Visitor(c_ast.NodeVisitor):
             "_Bool": "c_bool",
             "byte_t": "c_ubyte",
             "char": "c_char",
+            "errno_t": "c_int",
             "int": "c_int",
+            "long": "c_long",
             "size_t": "c_size_t",
             "uint32_t": "c_uint32",
             "uint8_t": "c_uint8",
@@ -75,25 +82,20 @@ class Visitor(c_ast.NodeVisitor):
             "#\n"
             "#It is a generated file. DO NOT EDIT.\n"
             "#\n"
-            "from .prologue import *\n"
             "from ctypes import *\n"
             "\n"
-            "\n"
-            "def dereference(p):\n"
-            "    if not isinstance(p, ctypes._Pointer):\n"
-            '        raise RuntimeError("not a pointer")\n'
-            "    return p.contents\n"
+            "from .ffi import dereference, libiwasm, wasm_ref_t, wasm_val_t\n"
             "\n"
             "\n"
         )
 
-    def get_type_name(self, type):
-        if isinstance(type, c_ast.TypeDecl):
-            return self.get_type_name(type.type)
-        elif isinstance(type, c_ast.PtrDecl):
-            pointed_type = self.get_type_name(type.type)
+    def get_type_name(self, c_type):
+        if isinstance(c_type, c_ast.TypeDecl):
+            return self.get_type_name(c_type.type)
+        elif isinstance(c_type, c_ast.PtrDecl):
+            pointed_type = self.get_type_name(c_type.type)
 
-            if isinstance(type.type, c_ast.FuncDecl):
+            if isinstance(c_type.type, c_ast.FuncDecl):
                 # CFUCNTYPE is a pointer of function
                 return pointed_type
 
@@ -102,52 +104,53 @@ class Visitor(c_ast.NodeVisitor):
 
             return f"POINTER({pointed_type})"
 
-        elif isinstance(type, c_ast.ArrayDecl):
-            return f"POINTER({self.get_type_name(type.type)})"
-        elif isinstance(type, c_ast.IdentifierType):
-            if len(type.names) > 1:
-                raise Exception(f"unexpected type with a long names: {type}")
+        elif isinstance(c_type, c_ast.ArrayDecl):
+            return f"POINTER({self.get_type_name(c_type.type)})"
+        elif isinstance(c_type, c_ast.IdentifierType):
+            if len(c_type.names) > 1:
+                raise RuntimeError(f"unexpected type with a long names: {c_type}")
 
-            type = type.names[0]
+            type_name = c_type.names[0]
 
-            if type.startswith("wasm_"):
-                return type
+            if type_name.startswith("wasm_"):
+                return type_name
 
-            if not type in self.type_map.keys():
-                raise Exception(f"a new type should be in type_map: {type}")
+            if not type_name in self.type_map:
+                raise RuntimeError(f"a new type should be in type_map: {type_name}")
 
-            return self.type_map.get(type)
-        elif isinstance(type, c_ast.Union):
-            if not type.name:
-                raise Exception(f"found an anonymous union {type}")
+            return self.type_map.get(type_name)
+        elif isinstance(c_type, c_ast.Union):
+            if not c_type.name:
+                raise RuntimeError(f"found an anonymous union {c_type}")
 
-            return type.name
-        elif isinstance(type, c_ast.Struct):
-            if not type.name:
-                raise Exception(f"found an anonymous union {type}")
+            return c_type.name
+        elif isinstance(c_type, c_ast.Struct):
+            if not c_type.name:
+                raise RuntimeError(f"found an anonymous union {c_type}")
 
-            return type.name
-        elif isinstance(type, c_ast.FuncDecl):
+            return c_type.name
+        elif isinstance(c_type, c_ast.FuncDecl):
             content = "CFUNCTYPE("
-            if isinstance(type.type, c_ast.PtrDecl):
+            if isinstance(c_type.type, c_ast.PtrDecl):
                 # there is a bug in CFUNCTYPE if the result type is a pointer
                 content += "c_void_p"
             else:
-                content += f"{self.get_type_name(type.type)}"
-            content += f",{self.get_type_name(type.args)}" if type.args else ""
+                content += f"{self.get_type_name(c_type.type)}"
+            content += f",{self.get_type_name(c_type.args)}" if c_type.args else ""
             content += ")"
             return content
-        elif isinstance(type, c_ast.Decl):
-            return self.get_type_name(type.type)
-        elif isinstance(type, c_ast.ParamList):
+        elif isinstance(c_type, c_ast.Decl):
+            return self.get_type_name(c_type.type)
+        elif isinstance(c_type, c_ast.ParamList):
             content = ",".join(
-                [self.get_type_name(param.type) for param in type.params]
+                [self.get_type_name(param.type) for param in c_type.params]
             )
             return content
         else:
-            raise Exception(f"unexpected type: {type.show()}")
+            raise RuntimeError(f"unexpected type: {c_type.show()}")
 
     def visit_Struct(self, node):
+        # pylint: disable=invalid-name
         def gen_fields(info, indent):
             content = ""
             for k, v in info.items():
@@ -226,9 +229,11 @@ class Visitor(c_ast.NodeVisitor):
         self.ret += "\n"
 
     def visit_Union(self, node):
+        # pylint: disable=invalid-name
         print(f"Union: {node.show()}")
 
     def visit_Typedef(self, node):
+        # pylint: disable=invalid-name
         # system defined
         if not node.name:
             return
@@ -248,6 +253,7 @@ class Visitor(c_ast.NodeVisitor):
             self.ret += "\n"
 
     def visit_FuncDecl(self, node):
+        # pylint: disable=invalid-name
         restype = self.get_type_name(node.type)
 
         if isinstance(node.type, c_ast.TypeDecl):
@@ -255,7 +261,7 @@ class Visitor(c_ast.NodeVisitor):
         elif isinstance(node.type, c_ast.PtrDecl):
             func_name = node.type.type.declname
         else:
-            raise Exception(f"unexpected type in FuncDecl: {type}")
+            raise RuntimeError(f"unexpected type in FuncDecl: {type}")
 
         if not func_name.startswith("wasm_") or func_name.endswith("_t"):
             return
@@ -288,6 +294,7 @@ class Visitor(c_ast.NodeVisitor):
         self.ret += "\n"
 
     def visit_Enum(self, node):
+        # pylint: disable=invalid-name
         elem_value = 0
         # generate enum elementes directly as consts with values
         for i, elem in enumerate(node.values.enumerators):
@@ -303,7 +310,7 @@ class Visitor(c_ast.NodeVisitor):
 
             self.ret += f" = {elem_value}\n"
 
-        self.ret += f"\n"
+        self.ret += "\n"
 
 
 def preflight_check(workspace):
@@ -351,9 +358,9 @@ def do_parse(workspace):
         ],
     )
 
-    v = Visitor()
-    v.visit(ast)
-    return v.ret
+    ast_visitor = Visitor()
+    ast_visitor.visit(ast)
+    return ast_visitor.ret
 
 
 def main():
@@ -368,9 +375,9 @@ def main():
         return False
 
     wamr_repo = root_dir.joinpath("wasm-micro-runtime")
-    binding_py = root_dir.joinpath(BINDING_PY)
-    with open(binding_py, "w") as f:
-        f.write(do_parse(wamr_repo))
+    binding_file_path = root_dir.joinpath(BINDING_PATH)
+    with open(binding_file_path, "wt", encoding="utf-8") as binding_file:
+        binding_file.write(do_parse(wamr_repo))
 
     return True
 

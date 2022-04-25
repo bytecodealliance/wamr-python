@@ -4,28 +4,91 @@
 # Copyright (C) 2019 Intel Corporation.  All rights reserved.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-module-docstring
 
-# FIXME: wildcard import
-from .binding import *
+import ctypes as c
+import os
+from pathlib import Path
+import sys
+
+#
+# Prologue. Dependencies of binding
+#
+
+# how to open the library file of WAMR
+
+if sys.platform == "linux":
+    BUILDING_DIR = "product-mini/platforms/linux/build"
+    LIBRARY_NAME = "libiwasm.so"
+elif sys.platform == "win32":
+    BUILDING_DIR = "product-mini/platforms/windows/build"
+    LIBRARY_NAME = "iwasm.dll"
+elif sys.platform == "darwin":
+    BUILDING_DIR = "product-mini/platforms/darwin/build"
+    LIBRARY_NAME = "libiwasm.dylib"
+else:
+    raise RuntimeError(f"unsupported platform `{sys.platform}`")
+
+current_file = Path(__file__)
+if current_file.is_symlink():
+    current_file = Path(os.readlink(current_file))
+current_dir = current_file.parent.resolve()
+root_dir = current_dir.joinpath("..").resolve()
+wamr_dir = root_dir.joinpath("wasm-micro-runtime").resolve()
+if not wamr_dir.exists():
+    raise RuntimeError(f"not found the repo of wasm-micro-runtime under {root_dir}")
+
+libpath = wamr_dir.joinpath(BUILDING_DIR).joinpath(LIBRARY_NAME).resolve()
+if not libpath.exists():
+    raise RuntimeError(f"not found precompiled wamr library at {libpath}")
+
+libiwasm = c.cdll.LoadLibrary(libpath)
 
 
+class wasm_ref_t(c.Structure):
+    # pylint: disable=invalid-name
+    pass
+
+
+class wasm_val_union(c.Union):
+    # pylint: disable=invalid-name
+    _fields_ = [
+        ("i32", c.c_int32),
+        ("i64", c.c_int64),
+        ("f32", c.c_float),
+        ("f64", c.c_double),
+        ("ref", c.POINTER(wasm_ref_t)),
+    ]
+
+
+class wasm_val_t(c.Structure):
+    # pylint: disable=invalid-name
+    _fields_ = [
+        ("kind", c.c_uint8),
+        ("of", wasm_val_union),
+    ]
+
+
+def dereference(p):
+    # pylint: disable=protected-access
+    if not isinstance(p, c._Pointer):
+        raise RuntimeError("not a pointer")
+    return p.contents
+
+
+# HELPERs
 def create_null_pointer(struct_type):
-    return ctypes.POINTER(struct_type)()
+    return c.POINTER(struct_type)()
 
 
-def is_null_pointer(pointer):
-    if isinstance(pointer, ctypes._Pointer):
-        return False if pointer else True
+def is_null_pointer(c_pointer):
+    # pylint: disable=protected-access
+    if isinstance(c_pointer, c._Pointer):
+        return False if c_pointer else True
     else:
         raise RuntimeError("not a pointer")
-
-
-def wasm_name_new_from_string(s):
-    name = wasm_name_t()
-    data = s.encode()
-    data = ((ctypes.c_ubyte) * len(s)).from_buffer_copy(data)
-    wasm_byte_vec_new(byref(name), len(s) + 1, data)
-    return name
 
 
 def wasm_vec_to_list(vec):
@@ -63,12 +126,20 @@ def load_module_file(wasm_content):
     binary = wasm_byte_vec_t()
     wasm_byte_vec_new_uninitialized(binary, len(wasm_content))
     # has to use malloced memory.
-    ctypes.memmove(binary.data, wasm_content, len(wasm_content))
+    c.memmove(binary.data, wasm_content, len(wasm_content))
     binary.num_elems = len(wasm_content)
     return binary
 
 
+#
+# Enhancment of binding
+#
+
+from .binding import *
+
 # Built-in functions for Structure
+
+
 wasm_finalizer = CFUNCTYPE(None, c_void_p)
 
 
@@ -88,16 +159,16 @@ def __compare_wasm_valtype_t(self, other):
 
 
 def __repr_wasm_valtype_t(self):
-    kind = wasm_valtype_kind(byref(self))
-    if WASM_I32 == kind:
+    val_kind = wasm_valtype_kind(byref(self))
+    if WASM_I32 == val_kind:
         return "i32"
-    elif WASM_I64 == kind:
+    elif WASM_I64 == val_kind:
         return "i64"
-    elif WASM_F32 == kind:
+    elif WASM_F32 == val_kind:
         return "f32"
-    elif WASM_F64 == kind:
+    elif WASM_F64 == val_kind:
         return "f64"
-    elif WASM_FUNCREF == kind:
+    elif WASM_FUNCREF == val_kind:
         return "funcref"
     else:
         return "anyref"
@@ -279,8 +350,8 @@ def __compare_wasm_importtype_t(self, other):
 def __repr_wasm_importtype_t(self):
     module = wasm_importtype_module(byref(self))
     name = wasm_importtype_name(byref(self))
-    type = wasm_importtype_type(byref(self))
-    return f'(import "{dereference(module)}" "{dereference(name)}" {dereference(type)})'
+    extern_type = wasm_importtype_type(byref(self))
+    return f'(import "{dereference(module)}" "{dereference(name)}" {dereference(extern_type)})'
 
 
 wasm_importtype_t.__eq__ = __compare_wasm_importtype_t
@@ -301,14 +372,14 @@ def __compare_wasm_exporttype_t(self, other):
     return self_type == other_type
 
 
-def __repr_wasm_externtype_t(self):
+def __repr_wasm_exporttype_t(self):
     name = wasm_exporttype_name(byref(self))
-    type = wasm_exporttype_type(byref(self))
-    return f'(export "{dereference(name)}" {dereference(type)})'
+    extern_type = wasm_exporttype_type(byref(self))
+    return f'(export "{dereference(name)}" {dereference(extern_type)})'
 
 
 wasm_exporttype_t.__eq__ = __compare_wasm_exporttype_t
-wasm_exporttype_t.__repr__ = __repr_wasm_externtype_t
+wasm_exporttype_t.__repr__ = __repr_wasm_exporttype_t
 
 
 def __compare_wasm_val_t(self, other):
@@ -423,21 +494,21 @@ wasm_memory_t.__repr__ = __repr_wasm_memory_t
 
 
 def __repr_wasm_extern_t(self):
-    type = wasm_extern_type(self)
-    kind = wasm_externtype_kind(type)
+    ext_type = wasm_extern_type(self)
+    ext_kind = wasm_extern_kind(self)
 
     ret = "(export "
-    if WASM_EXTERN_FUNC == kind:
-        ft = wasm_externtype_as_functype(type)
+    if WASM_EXTERN_FUNC == ext_kind:
+        ft = wasm_externtype_as_functype(ext_type)
         ret += str(dereference(ft))
-    elif WASM_EXTERN_GLOBAL == kind:
-        gt = wasm_externtype_as_globaltype(type)
+    elif WASM_EXTERN_GLOBAL == ext_kind:
+        gt = wasm_externtype_as_globaltype(ext_type)
         ret += str(dereference(gt))
-    elif WASM_EXTERN_MEMORY == kind:
-        mt = wasm_externtype_as_memorytype(type)
+    elif WASM_EXTERN_MEMORY == ext_kind:
+        mt = wasm_externtype_as_memorytype(ext_type)
         ret += str(dereference(mt))
-    elif WASM_EXTERN_TABLE == kind:
-        tt = wasm_externtype_as_tabletype(self)
+    elif WASM_EXTERN_TABLE == ext_kind:
+        tt = wasm_externtype_as_tabletype(ext_type)
         ret += str(dereference(tt))
     else:
         raise RuntimeError("not a valid extern kind")
@@ -449,6 +520,14 @@ wasm_extern_t.__repr__ = __repr_wasm_extern_t
 
 
 # Function Types construction short-hands
+def wasm_name_new_from_string(s):
+    name = wasm_name_t()
+    data = s.encode()
+    data = ((c.c_ubyte) * len(s)).from_buffer_copy(data)
+    wasm_byte_vec_new(byref(name), len(s) + 1, data)
+    return name
+
+
 def __wasm_functype_new(param_list, result_list):
     def __list_to_wasm_valtype_vec(l):
         vec = wasm_valtype_vec_t()
