@@ -470,32 +470,27 @@ Almost follow the [C++ version of wasm_c_api](https://github.com/WebAssembly/was
 |              | wasm_instance_delete           |            |                  |
 |              | wasm_instance_new_with_args\*  |            |                  |
 |              | wasm_instance_exports          |            |                  |
-|              | _vector methods_               |            |                  |
 | func         | wasm_func_new                  | func       |                  |
 |              | wasm_func_delete               |            |                  |
 |              | wasm_func_type                 |            |                  |
 |              | wasm_func_call                 |            |                  |
-|              | _vector methods_               |            |                  |
 | global       | wasm_global_new                | global     |                  |
 |              | wasm_global_delete             |            |                  |
 |              | wasm_global_type               |            |                  |
 |              | wasm_global_get                |            |                  |
 |              | wasm_global_set                |            |                  |
-|              | _vector methods_               |            |                  |
 | table        | wasm_table_new                 | table      |                  |
 |              | wasm_table_delete              |            |                  |
 |              | wasm_table_type                |            |                  |
 |              | wasm_table_get                 |            |                  |
 |              | wasm_table_set                 |            |                  |
 |              | wasm_table_size                |            |                  |
-|              | _vector methods_               |            |                  |
 | memory       | wasm_memory_new                | memory     |                  |
 |              | wasm_memory_delete             |            |                  |
 |              | wasm_memory_type               |            |                  |
 |              | wasm_memory_data               |            |                  |
 |              | wasm_memory_data_size          |            |                  |
 |              | wasm_memory_size               |            |                  |
-|              | _vector methods_               |            |                  |
 | extern       | wasm_extern_delete             | extern     |                  |
 |              | wasm_extern_as_XXX             |            |                  |
 |              | wasm_XXX_as_extern             |            |                  |

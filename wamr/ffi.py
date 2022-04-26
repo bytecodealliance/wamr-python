@@ -98,10 +98,17 @@ def wasm_vec_to_list(vec):
     """
     known_vec_type = [
         wasm_byte_vec_t,
-        wasm_extern_vec_t,
-        wasm_exporttype_vec_t,
-        wasm_importtype_vec_t,
         wasm_valtype_vec_t,
+        wasm_functype_vec_t,
+        wasm_globaltype_vec_t,
+        wasm_tabletype_vec_t,
+        wasm_memorytype_vec_t,
+        wasm_externtype_vec_t,
+        wasm_importtype_vec_t,
+        wasm_exporttype_vec_t,
+        wasm_val_vec_t,
+        wasm_frame_vec_t,
+        wasm_extern_vec_t,
     ]
     known_vec_pointer_type = [POINTER(type) for type in known_vec_type]
 
@@ -425,10 +432,20 @@ wasm_val_t.__eq__ = __compare_wasm_val_t
 def __repr_wasm_trap_t(self):
     message = wasm_message_t()
     wasm_trap_message(self, message)
-    return str(message)
+    return f'(trap "{str(message)}")'
 
 
 wasm_trap_t.__repr__ = __repr_wasm_trap_t
+
+
+def __repr_wasm_frame_t(self):
+    instance = wasm_frame_instance(self)
+    module_offset = wasm_frame_module_offset(self)
+    func_index = wasm_frame_func_index(self)
+    func_offset = wasm_frame_func_offset(self)
+    return f"> module:{module_offset:#x} => func#{func_index:#x}.{func_offset:#x}"
+
+wasm_frame_t.__repr__ = __repr_wasm_frame_t
 
 
 def __repr_wasm_module_t(self):
@@ -522,9 +539,8 @@ wasm_extern_t.__repr__ = __repr_wasm_extern_t
 # Function Types construction short-hands
 def wasm_name_new_from_string(s):
     name = wasm_name_t()
-    data = s.encode()
-    data = ((c.c_ubyte) * len(s)).from_buffer_copy(data)
-    wasm_byte_vec_new(byref(name), len(s) + 1, data)
+    data = ((c.c_ubyte) * len(s)).from_buffer_copy(s.encode())
+    wasm_byte_vec_new(byref(name), len(s), data)
     return name
 
 
@@ -578,6 +594,13 @@ def wasm_functype_new_2_1(p1, p2, r1):
 
 def wasm_functype_new_3_1(p1, p2, p3, r1):
     return __wasm_functype_new([p1, p2, p3], [r1])
+
+
+def wasm_limits_new(min, max):
+    limit = wasm_limits_t()
+    limit.min = min
+    limit.max = max
+    return c.pointer(limit)
 
 
 def wasm_i32_val(i):
