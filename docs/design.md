@@ -1,26 +1,28 @@
 # how to implement a python binding of WAMR
 
-A python embedding of a Wasm runtime allows its users to call a set of APIs of
-the runtime, which are implemented in C, C++, or Rust, from the python world.
+A python language binding of Wasm runtime allows its users to call a set of APIs of
+the runtime from the python world. Those APIs maybe implemented in C, C++, or Rust.
 
-In the WAMR case, interfaces in `core/iwasm/include/wasm_c_api.h` will be able
-to be called from the python world. To achieve that, we will create two kinds
+In the WAMR case, a python binding allows APIs in `core/iwasm/include/wasm_c_api.h`
+to be used in the python scripts. To achieve that, we will create two kinds
 of stuff: wrappers of structured data types and wrappers of functions under the
 help of _ctypes_.
 
-> Cyptes is a tool in the standard library for creating Python bindings. It
-> provides a low-level toolset for loading shared libraries and marshaling
-> data between Python and C. Other options include _cffi_, _pybind11_,
-> _cpython_ and so on. Because we tend to make the binding depending on least
-> items. The built-in module, _ctypes_, is a good choice.
+Cyptes is a tool in the standard library for creating Python bindings. It
+provides a low-level toolset for loading shared libraries and marshaling
+data between Python and C. Other options include _cffi_, _pybind11_,
+_cpython_ and so on. Because we tend to make the binding depending on least
+items. The built-in module, _ctypes_, is a good choice.
 
 ## General rules to marshal
+
+The core of the idea of a language binding is how to translate different
+representations of types in different language.
 
 ### load libraries
 
 The `ctypes` supports locating a dynamic link library in a way similar to the
-compiler does. In the WAMR case,
-it is _libiwasm.so_.
+compiler does.
 
 Currently, `ctypes.LoadLibrary` supports:
 
@@ -36,52 +38,56 @@ Like `c_bool`, `c_byte`, `c_int`, `c_long` and so on.
 > `c_int` represents the _C_ `signed int` datatype. On platforms where
 > `sizeof(int) == sizeof(long)` it is an alias to `c_long`.
 
-| c datatypes         | ctypes         |
-| ------------------- | -------------- |
-| bool                | c_bool         |
-| byte_t              | c_ubyte        |
-| char                | c_char         |
-| float32_t           | c_float        |
-| float64_t           | c_double       |
-| int32_t             | c_int32        |
-| int64_t             | c_int64        |
-| intptr_t            | c_void_p       |
-| size_t              | c_size_t       |
-| uint8_t             | c_uint8        |
-| uint32_t            | c_uint32       |
-| wasm_byte_t         | c_ubyte        |
-| wasm_externkind_t   | c_uint8        |
-| wasm_memory_pages_t | c_uint32       |
-| wasm_mutability_t   | c_bool         |
-| wasm_table_size_t   | c_uint32       |
-| wasm_valkind_t      | wasm_valkind_t |
+| c datatypes         | ctypes                  |
+| ------------------- | ----------------------- |
+| bool                | c_bool                  |
+| byte_t              | c_ubyte                 |
+| char                | c_char                  |
+| float32_t           | c_float                 |
+| float64_t           | c_double                |
+| int32_t             | c_int32                 |
+| int64_t             | c_int64                 |
+| intptr_t            | c_void_p                |
+| size_t              | c_size_t                |
+| uint8_t             | c_uint8                 |
+| uint32_t            | c_uint32                |
+| void                | None                    |
+| wasm_byte_t         | c_ubyte                 |
+| wasm_externkind_t   | c_uint8                 |
+| wasm_memory_pages_t | c_uint32                |
+| wasm_mutability_t   | c_bool                  |
+| wasm_table_size_t   | c_uint32                |
+| wasm_valkind_t      | c_uint8                 |
+| wasm_data_type\*    | POINTER(wasm_data_type) |
 
-`ctypes.POINTER(datatype_name)` represents any kind of pointer.
+- `c_void_p` only represents `void *` only
+- `None` represents `void` in function parameter lists and return lists
 
 ### structured datatypes
 
-To create a corresponding concept of each native structured data type includes
+Create a corresponding concept for every native structured data type includes
 `enum`, `struct` and `union`, in the python world.
 
 #### Enum types
 
-For example, if there is a `enum mem_alloc_type_t` in native.
+For example, if there is a `enum wams_mutability_enum` in native.
 
 ```c
-typedef enum {
-  Alloc_With_Pool = 0,
-  Alloc_With_Allocator,
-  Alloc_With_System_Allocator
-} mem_alloc_type_t;
+typedef uint8_t wams_mutability_t;
+enum wams_mutability_enum {
+  WASM_CONST,
+  WASM_VAR
+};
 ```
 
-Use `ctypes.int` to represents its value directly.
+Use `ctypes.int`(or any integer types in ctypes) to represents its value directly.
 
 ```python
-# represents enum mem_alloc_type_t
-Alloc_With_Pool = 0
-Alloc_With_Allocator = 1
-Alloc_With_System_Allocator = 2
+# represents enum wams_mutability_enum
+wasm_mutability_t = c_uint8
+
+WASM_CONST = 0
+WASM_VAR = 1
 ```
 
 > C standard only requires "Each enumerated type shall be compatible with char,
@@ -113,6 +119,37 @@ class wasm_byte_vec_t(ctypes.Structure):
     ("size_of_elem", ctypes.c_size_t),
   ]
 ```
+
+a list of supported `struct`
+
+| name              |
+| ----------------- |
+| wasm_engine_t     |
+| wasm_store_t      |
+| wasm_limits_t     |
+| wasm_valtype_t    |
+| wasm_functype_t   |
+| wasm_globaltype_t |
+| wasm_tabletype_t  |
+| wasm_memorytype_t |
+| wasm_externtype_t |
+| wasm_importtype_t |
+| wasm_exporttype_t |
+| wasm_ref_t        |
+| wasm_frame_t      |
+| wasm_trap_t       |
+| wasm_foreign_t    |
+| WASMModuleCommon  |
+| wasm_func_t       |
+| wasm_global_t     |
+| wasm_table_t      |
+| wasm_memory_t     |
+| wasm_extern_t     |
+| wasm_instance_t   |
+
+a list of unsupported `struct`
+
+- wasm_config_t
 
 #### Union types
 
@@ -149,7 +186,7 @@ class wasm_val_t(ctypes.Structure):
   ]
 ```
 
-## wrappers of functions
+### wrappers of functions
 
 Foreign functions (C functions) can be accessed as attributes of loaded shared
 libraries or an instance of function prototypes. Callback functions(python
@@ -192,7 +229,7 @@ Sometimes, need to create a python function as a callback of c.
 wasm_trap_t* (*wasm_func_callback_t)(wasm_val_vec_t* args, wasm_val_vec_t *results);
 ```
 
-`cyptes.CFUNCTYPE` is the only choice
+Use `cyptes.CFUNCTYPE` to create a _pointer of function_
 
 ```python
 def hello(args, results):
@@ -213,18 +250,25 @@ def hello(args, results):
   print("hello from a callback")
 ```
 
-It's better to provide two `ctypes.CFUNCTYPE` for `wasm_func_callback_t` and
-`wasm_func_callback_with_env_t`. Or their corresponding decorators.
+### programming tips
 
-### programming choices
+#### `struct` and `ctypes.Structure`
 
-A python binding should be just some glue code between the _wasm_c_api_
-and python code. List something useful to guide coding.
+There are two kinds of `cytes.Structure` in `binding.py`.
 
-#### pass pointers
+- has `__field__` definition. like `class wasm_byte_vec_t(Structure)`
+- doesn't have `__field__` definition. like `class wasm_config_t(Structure)`
 
-`byref()` and `pointer()` are choices when passing a pointer value to host when
-using ctypes.
+Since, `ctypes` will create its C world _mirror_ variable according to `__field__`
+information, `wasm_config_t()` will only create a python instance without binding
+to any C variable. `wasm_byte_vec_t()` will return a python instance with an internal
+C variable.
+
+That is why `pointer(wasm_config_t())` is a NULL pointer which can not be dereferenced.
+
+#### deal with pointers
+
+`byref()` and `pointer()` are two functions can return a pointer.
 
 ```python
 x = ctypes.c_int(2)
@@ -244,21 +288,9 @@ constructs a real pointer object. It is faster to use `byref(`) if don't need
 the pointer object in Python itself(e.g. only use it as an argument to pass
 to a function).
 
-If it is created by `wasm_xxx_new()` in the host, the value is a pointer type
-and can be used directly.
-
-```python
-engine = wasm_engine_new()
-wasm_engine_delete(engine)
-```
-
-If it is created by a class `new()` in python, the value is not a pointer and
-need to be wrapped by `byref()`.
-
-```python
-binary = wasm_byte_vec_t()
-wasm_byte_vec_new_uninitialized(byref(binary), len(wasm))
-```
+There is no doubt that `wasm_xxx_new()` which return type is `ctypes.POINTER`
+can return a pointer. Plus, the return value of `wasm_xxx_t()` can also be
+used as a pointer without casting by `byref` or `pointer`.
 
 #### array
 
@@ -304,9 +336,7 @@ raising any additional exception.
 
 The python binding should raise exceptions when the python partial is failed.
 
-#### avoid copying
-
-the .wasm module loading is an exception that needs a copy.
+#### readonly buffer
 
 ```python
 with open("hello.wasm", "rb") as f:
@@ -318,15 +348,8 @@ with open("hello.wasm", "rb") as f:
     binary.data = (ctypes.c_ubyte * len(wasm)).from_buffer_copy(wasm)
 ```
 
-`wasm` is a python-created readable buffer. It is not writable and needs to be
-copied into a ctype array.
-
-#### block unimplemented functions
-
-such functions will return directly instead of calling their corresponding.
-
-- `wasm_table_grow`
-- `wasm_memory_grow`
+in the above example, `wasm` is a python-created readable buffer. It is not
+writable and needs to be copied into a ctype array.
 
 #### variable arguments
 
@@ -343,10 +366,26 @@ libc.printf(b"Hello, an int %d, a float %f, a string %s\n", c_int(1), c_doulbe(3
 `static inline` funtions are hidden by compilers by default. So, it will not
 create wrappers for those unvisiable symbols.
 
-### bindgen.py
+#### Use `c_bool` to represent `wasm_mutability_t `
 
-Use _pycparser_. Visit the AST of `core/iwasm/include/wasm_c_api.h` created
-by _gcc_ and generate necessary wrappers.
+- `True` for `WASM_CONST`
+- `False` for `WASM_VALUE`
+
+#### customize class builtins
+
+In `ffi.py`,
+
+- `__eq__` for comparation.
+- `__repr__` for printing.
+
+## bindgen.py
+
+`bindge.py` is a tool to create WAMR python binding automatically. `binding.py`
+is generated. We should avoid modification on it. Additional helpers should go
+to `ffi.py`.
+
+`bindgen.py` uses _pycparser_. Visit the AST of `core/iwasm/include/wasm_c_api.h`
+created by _gcc_ and generate necessary wrappers.
 
 ```python
 from pycparser import c_ast
@@ -375,19 +414,27 @@ and shared libararies should be generated.
 ```bash
 $ python utils/download_wamr.py
 $ # if it is in linux
-$ pushd product-mini/platforms/linux/build
-$ cmake .. && make
+$ pushd product-mini/platforms/linux/
+$ cmake -S . -B build ..
+$ cmake --build build --target iwasm
 $ popd
 $ python utils/bindgen.py
 ```
 
+`wasm_frame_xxx` and `wasm_trap_xxx` only work well when enabling `WAMR_BUILD_DUMP_CALL_STACK`.
+
+```bash
+$ cmake -S . -B build -DWAMR_BUILD_DUMP_CALL_STACK=1 ..
+```
+
 ## OOP wrappers
 
-Based on the above general rules, there will be corresponding same name python
-APIs for every C API in `wasm_c_api.h`. Users can do procedural programming
-with those.
+Based on the above general rules, there will be corresponding python
+APIs for every C API in `wasm_c_api.h` with same name. Users can do procedural
+programming with those.
 
-Almost follow the [C++ version of wasm_c_api](https://github.com/WebAssembly/wasm-c-api/blob/master/include/wasm.hh)
+In next phase, we will create OOP APIs. Almost follow the
+[C++ version of wasm_c_api](https://github.com/WebAssembly/wasm-c-api/blob/master/include/wasm.hh)
 
 | WASM Concept | Procedural APIs                | OOP APIs   | OOP APIs methods |
 | ------------ | ------------------------------ | ---------- | ---------------- |
@@ -398,41 +445,51 @@ Almost follow the [C++ version of wasm_c_api](https://github.com/WebAssembly/was
 |              | wasm_xxx_vec_delete            |            |                  |
 | valtype      | wasm_valtype_new               | valtype    | \_\_init\_\_     |
 |              | wasm_valtype_delete            |            | \_\_del\_\_      |
-|              | wasm_valtype_kind              |            |                  |
+|              | wasm_valtype_kind              |            | \_\_eq\_\_       |
+|              | wasm_valtype_copy              |            |                  |
 |              | _vector methods_               |            |                  |
 | functype     | wasm_functype_new              | functype   |                  |
 |              | wasm_functype_delete           |            |                  |
 |              | wasm_functype_params           |            |                  |
 |              | wasm_functype_results          |            |                  |
+|              | wasm_functype_copy             |            |                  |
 |              | _vector methods_               |            |                  |
-| globaltype   | wasm_globaltype_new            | globaltype |                  |
-|              | wasm_globaltype_delete         |            |                  |
-|              | wasm_globaltype_content        |            |                  |
+| globaltype   | wasm_globaltype_new            | globaltype | \_\_init\_\_     |
+|              | wasm_globaltype_delete         |            | \_\_del\_\_      |
+|              | wasm_globaltype_content        |            | \_\_eq\_\_       |
 |              | wasm_globaltype_mutability     |            |                  |
+|              | wasm_globaltype_copy           |            |                  |
 |              | _vector methods_               |            |                  |
-| tabletype    | wasm_tabletype_new             | tabletype  |                  |
-|              | wasm_tabletype_delete          |            |                  |
-|              | wasm_tabletype_element         |            |                  |
+| tabletype    | wasm_tabletype_new             | tabletype  | \_\_init\_\_     |
+|              | wasm_tabletype_delete          |            | \_\_del\_\_      |
+|              | wasm_tabletype_element         |            | \_\_eq\_\_       |
 |              | wasm_tabletype_limits          |            |                  |
+|              | wasm_tabletype_copy            |            |                  |
 |              | _vector methods_               |            |                  |
-| memorytype   | wasm_memorytype_new            | memorytype |                  |
-|              | wasm_memorytype_delete         |            |                  |
-|              | wasm_memorytype_limits         |            |                  |
+| memorytype   | wasm_memorytype_new            | memorytype | \_\_init\_\_     |
+|              | wasm_memorytype_delete         |            | \_\_del\_\_      |
+|              | wasm_memorytype_limits         |            | \_\_eq\_\_       |
+|              | wasm_memorytype_copy           |            |                  |
 |              | _vector methods_               |            |                  |
 | externtype   | wasm_externtype_as_XXX         | externtype |                  |
 |              | wasm_XXX_as_externtype         |            |                  |
+|              | wasm_externtype_copy           |            |                  |
+|              | wasm_externtype_delete         |            |                  |
+|              | wasm_externtype_kind           |            |                  |
 |              | _vector methods_               |            |                  |
 | importtype   | wasm_importtype_new            | importtype |                  |
 |              | wasm_importtype_delete         |            |                  |
 |              | wasm_importtype_module         |            |                  |
 |              | wasm_importtype_name           |            |                  |
 |              | wasm_importtype_type           |            |                  |
+|              | wasm_importtype_copy           |            |                  |
 |              | _vector methods_               |            |                  |
-| exportype    | wasm_exportype_new             | exporttype |                  |
-|              | wasm_exportype_delete          |            |                  |
-|              | wasm_exportype_module          |            |                  |
-|              | wasm_exportype_name            |            |                  |
-|              | wasm_exportype_type            |            |                  |
+| exportype    | wasm_exporttype_new            | exporttype |                  |
+|              | wasm_exporttype_delete         |            |                  |
+|              | wasm_exporttype_module         |            |                  |
+|              | wasm_exporttype_name           |            |                  |
+|              | wasm_exporttype_type           |            |                  |
+|              | wasm_exporttype_copy           |            |                  |
 |              | _vector methods_               |            |                  |
 | name         | wasm_name_new                  | name       |                  |
 |              | wasm_name_delete               |            |                  |
@@ -445,6 +502,7 @@ Almost follow the [C++ version of wasm_c_api](https://github.com/WebAssembly/was
 |              | wasm_frame_func_index          |            |                  |
 |              | wasm_frame_func_offset         |            |                  |
 |              | wasm_frame_module_offset       |            |                  |
+|              | wasm_frame_copy                |            |                  |
 |              | _vector methods_               |            |                  |
 | trap         | wasm_trap_new                  | trap       |                  |
 |              | wasm_trap_delete               |            |                  |
@@ -470,42 +528,68 @@ Almost follow the [C++ version of wasm_c_api](https://github.com/WebAssembly/was
 |              | wasm_instance_delete           |            |                  |
 |              | wasm_instance_new_with_args\*  |            |                  |
 |              | wasm_instance_exports          |            |                  |
+|              | _vector methods_               |            |                  |
 | func         | wasm_func_new                  | func       |                  |
+|              | wasm_func_new_with_env         |            |                  |
 |              | wasm_func_delete               |            |                  |
 |              | wasm_func_type                 |            |                  |
 |              | wasm_func_call                 |            |                  |
+|              | wasm_func_param_arity          |            |                  |
+|              | wasm_func_result_arity         |            |                  |
+|              | _vector methods_               |            |                  |
 | global       | wasm_global_new                | global     |                  |
 |              | wasm_global_delete             |            |                  |
 |              | wasm_global_type               |            |                  |
 |              | wasm_global_get                |            |                  |
 |              | wasm_global_set                |            |                  |
+|              | _vector methods_               |            |                  |
 | table        | wasm_table_new                 | table      |                  |
 |              | wasm_table_delete              |            |                  |
 |              | wasm_table_type                |            |                  |
 |              | wasm_table_get                 |            |                  |
 |              | wasm_table_set                 |            |                  |
 |              | wasm_table_size                |            |                  |
+|              | _vector methods_               |            |                  |
 | memory       | wasm_memory_new                | memory     |                  |
 |              | wasm_memory_delete             |            |                  |
 |              | wasm_memory_type               |            |                  |
 |              | wasm_memory_data               |            |                  |
 |              | wasm_memory_data_size          |            |                  |
 |              | wasm_memory_size               |            |                  |
+|              | _vector methods_               |            |                  |
 | extern       | wasm_extern_delete             | extern     |                  |
 |              | wasm_extern_as_XXX             |            |                  |
 |              | wasm_XXX_as_extern             |            |                  |
+|              | wasm_extern_kind               |            |                  |
+|              | wasm_extern_type               |            |                  |
 |              | _vector methods_               |            |                  |
+
+not supported _functions_
+
+- wasm_config_XXX
+- wasm_module_deserialize
+- wasm_module_serialize
+- wasm_ref_XXX
+- wasm_XXX_as_ref
+- wasm_XXX_as_ref_const
+- wasm_XXX_get_host_info
+- wasm_XXX_set_host_info
 
 ## test
 
 there will be two kinds of tests in the project
 
 - unit test. located in `./tests`. driven by _unittest_. run by
-  `$ python -m unittest`
+  `$ python -m unittest` or `$ make test`.
 - integration test. located in `./examples`.
 
-The whole project is under test-driven development. Each wrapper function will have an
-expect-failure test case and an expect-success test case. The expect-failure one will suppose to catch failed branches, like illegal parameters.
+The whole project is under test-driven development. Every wrapper function will
+have two kinds of test cases. The first kind is a positive case. It checks a
+wrapper function with expected and safe arguments combinations. Its goal is the
+function should work well with expected inputs. Another kind is a negative
+case. It feeds unexpected arguments combinations into a wrapper function. Arguments
+should include but not be limited to `None`. It ensures that the function will
+gracefully handle invalid input or unexpected behaviors.
 
 ## distribution
 
@@ -629,8 +713,3 @@ There are several parts:
 - code format check.
 - test. include running all unit test cases and examples.
 - publish built distribution.
-
-## Link with wasm-micro-runtime repo
-
-There will be several links to this python binding repo from the
-_wasm-micro-runtime_ repo.
