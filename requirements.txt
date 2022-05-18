@@ -1,3 +1,5 @@
+black
 nose
 pycparser
+pylint
 sphinx
